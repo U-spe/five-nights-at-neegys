@@ -1,0 +1,91 @@
+[
+    {
+        "id": "regular",
+        "name": "Regular Neegy",
+        "role": "Direct attacker",
+        "startCamera": "1a",
+
+        "route": [
+            "1a",
+            "1d",
+            "2d",
+            "1e",
+            "3e"
+        ],
+
+        "attackSide": "left",
+
+        "mechanic": "Moves through the left side of the bank. Close the left door when he reaches Camera 3E."
+    },
+    {
+        "id": "girl",
+        "name": "Girl Neegy",
+        "role": "Patient attacker",
+        "startCamera": "1a",
+
+        "route": [
+            "1a",
+            "1b",
+            "3a",
+            "2e",
+            "4e"
+        ],
+
+        "attackSide": "right",
+
+        "mechanic": "Moves through the right side and sometimes waits before advancing."
+    },
+    {
+        "id": "rapper",
+        "name": "Rapper Neegy",
+        "role": "Camera stalker",
+        "startCamera": "1a",
+
+        "route": [
+            "1a",
+            "1c",
+            "1d",
+            "2d",
+            "2e",
+            "4e"
+        ],
+
+        "attackSide": "right",
+
+        "mechanic": "Moves faster when ignored. Watching his camera slows him down."
+    },
+    {
+        "id": "farmer",
+        "name": "Farmer Neegy",
+        "role": "Runner",
+        "startCamera": "2f",
+
+        "route": [
+            "2f",
+            "1e",
+            "3e"
+        ],
+
+        "attackSide": "left",
+
+        "mechanic": "Builds up a rush when Camera 2F is ignored. Watching him resets the buildup."
+    },
+    {
+        "id": "banana",
+        "name": "Banana Neegy",
+        "role": "System disruptor",
+        "startCamera": "3b",
+
+        "route": [
+            "3b",
+            "3d",
+            "2d",
+            "2e",
+            "4e"
+        ],
+
+        "attackSide": "right",
+
+        "mechanic": "Causes camera interference. Switch cameras to clear the signal."
+    }
+]
