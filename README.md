@@ -10,7 +10,7 @@ Survive five nights. Watch the cameras. Manage your power.
 And whatever you do... **don't get caught lacking.**
 
 ![Status](https://img.shields.io/badge/STATUS-IN%20DEVELOPMENT-00b140?style=for-the-badge)
-![Nights](https://img.shields.io/badge/NIGHTS-5-black?style=for-the-badge)
+![Nights](https://img.shields.io/badge/NIGHTS-7-black?style=for-the-badge)
 ![Platform](https://img.shields.io/badge/PLATFORM-BROWSER-gold?style=for-the-badge)
 ![Forking](https://img.shields.io/badge/FORKING-NO-red?style=for-the-badge)
 
