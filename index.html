@@ -5,313 +5,116 @@
 
     <meta
         name="viewport"
-        content="width=device-width, initial-scale=1.0"
+        content="width=device-width, initial-scale=1,
+        maximum-scale=1, user-scalable=no"
+    >
+
+    <meta
+        name="description"
+        content="5 Nights at Neegys, a browser survival horror game."
+    >
+
+    <meta
+        name="theme-color"
+        content="#000000"
     >
 
     <title>5 Nights at Neegys</title>
 
-    <link rel="stylesheet" href="css/style.css">
+    <link
+        rel="preconnect"
+        href="https://fonts.googleapis.com"
+    >
+
+    <link
+        rel="preconnect"
+        href="https://fonts.gstatic.com"
+        crossorigin
+    >
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=VT323&display=swap"
+        rel="stylesheet"
+    >
+
+    <link
+        rel="stylesheet"
+        href="css/style.css"
+    >
 </head>
 
 <body>
 
-    <div class="scanlines"></div>
+    <div id="gameShell">
 
-    <!-- MAIN MENU -->
-    <main id="menuScreen" class="screen menu-screen">
+        <canvas
+            id="sceneCanvas"
+            width="1280"
+            height="720"
+            aria-label="5 Nights at Neegys game"
+        ></canvas>
 
-        <section class="menu-content">
+        <canvas
+            id="uiCanvas"
+            width="1280"
+            height="720"
+        ></canvas>
 
-            <p class="bank-label">
-                NEEGY NATIONAL BANK • NIGHT SECURITY
+    </div>
+
+
+    <div
+        id="audioPermission"
+        class="game-dialog hidden"
+    >
+        <section>
+            <h1>Sound Permission</h1>
+
+            <p>
+                Tap below to enable game audio.
             </p>
 
-            <h1 class="game-title">
-                <span>5 NIGHTS</span>
-                <small>AT</small>
-                <strong>NEEGYS</strong>
-            </h1>
-
-            <p class="menu-description">
-                Your shift begins at 12:00 AM.
-            </p>
-
-            <nav class="main-menu">
-
-                <button id="newGameButton" class="menu-button selected">
-                    <span>New Game</span>
-                    <b>01</b>
-                </button>
-
-                <button id="selectNightButton" class="menu-button">
-                    <span>Select Night</span>
-                    <b>07</b>
-                </button>
-
-                <button id="settingsButton" class="menu-button">
-                    <span>Settings</span>
-                    <b>⚙</b>
-                </button>
-
-            </nav>
-
-            <p id="menuMessage" class="menu-message">
-                Systems ready
-            </p>
-
+            <button id="allowAudioButton">
+                ENABLE AUDIO
+            </button>
         </section>
+    </div>
 
-        <aside class="vault-display">
 
-            <div class="vault-ring">
+    <div
+        id="fullscreenDialog"
+        class="game-dialog hidden"
+    >
+        <section>
+            <h1>Fullscreen Paused</h1>
 
-                <div class="vault-center">
-                    N
-                </div>
+            <p>
+                Return to fullscreen mode?
+            </p>
 
-            </div>
-
-            <p>VAULT 01</p>
-
-        </aside>
-
-        <footer class="menu-footer">
-
-            <span>v0.1.0 • FOUNDATION BUILD</span>
-
-            <button id="soundButton">
-                SOUND ON
+            <button id="enterFullscreenButton">
+                ENTER FULLSCREEN
             </button>
 
-        </footer>
-
-    </main>
-
-
-    <!-- NIGHT SELECT -->
-    <main id="nightSelectScreen" class="screen night-screen hidden">
-
-        <section class="night-panel">
-
-            <button id="nightBackButton" class="back-button">
-                ← MAIN MENU
+            <button
+                id="closeFullscreenButton"
+                class="secondary"
+            >
+                CANCEL
             </button>
-
-            <p class="bank-label">SHIFT ARCHIVE</p>
-
-            <h2>Select Night</h2>
-
-            <div id="nightGrid" class="night-grid"></div>
-
         </section>
+    </div>
 
-    </main>
 
+    <noscript>
+        JavaScript is required to play 5 Nights at Neegys.
+    </noscript>
 
-    <!-- OFFICE -->
-    <main id="officeScreen" class="screen office-screen hidden">
 
-        <header class="office-header">
-
-            <div class="night-display">
-                <span>NIGHT</span>
-                <strong id="nightNumber">1</strong>
-            </div>
-
-            <div class="location-display">
-                <span>NEEGY NATIONAL BANK</span>
-                <small id="systemMessage">Systems online</small>
-            </div>
-
-            <div class="time-display">
-                <strong id="gameHour">12 AM</strong>
-                <span id="shiftTimer">0:00</span>
-            </div>
-
-        </header>
-
-
-        <section class="office-view">
-
-            <div id="leftHall" class="hall left-hall">
-                <span>LEFT HALL</span>
-            </div>
-
-            <div id="rightHall" class="hall right-hall">
-                <span>RIGHT HALL</span>
-            </div>
-
-
-            <div class="office-center">
-
-                <div class="desk-monitor">
-                    <span>NEEGY BANK</span>
-                    <strong>SECURITY</strong>
-                </div>
-
-                <div class="desk-fan">
-                    ✣
-                </div>
-
-                <div class="warning-note">
-                    DO NOT LET THEM REACH THE OFFICE.
-                </div>
-
-            </div>
-
-
-            <div id="leftDoor" class="door left-door"></div>
-            <div id="rightDoor" class="door right-door"></div>
-
-
-            <div class="control-panel left-controls">
-
-                <button id="leftDoorButton" class="door-button">
-                    DOOR
-                </button>
-
-                <button id="leftLightButton" class="light-button">
-                    LIGHT
-                </button>
-
-            </div>
-
-
-            <div class="control-panel right-controls">
-
-                <button id="rightDoorButton" class="door-button">
-                    DOOR
-                </button>
-
-                <button id="rightLightButton" class="light-button">
-                    LIGHT
-                </button>
-
-            </div>
-
-        </section>
-
-
-        <section class="power-section">
-
-            <div class="power-heading">
-
-                <span>POWER LEFT</span>
-
-                <strong id="powerText">
-                    100%
-                </strong>
-
-            </div>
-
-            <div class="power-bar">
-
-                <div id="powerFill"></div>
-
-            </div>
-
-            <div class="usage-row">
-
-                <span>USAGE</span>
-
-                <div id="usageBars" class="usage-bars">
-
-                    <i></i>
-                    <i></i>
-                    <i></i>
-                    <i></i>
-                    <i></i>
-                    <i></i>
-
-                </div>
-
-            </div>
-
-        </section>
-
-
-        <button id="cameraButton" class="camera-button">
-            OPEN CAMERAS
-        </button>
-
-
-        <!-- CAMERA SYSTEM -->
-        <section id="cameraSystem" class="camera-system hidden">
-
-            <div class="camera-feed">
-
-                <div class="camera-static"></div>
-
-                <div class="recording">
-                    <i></i>
-                    REC
-                </div>
-
-                <p id="cameraCode">CAM 1A</p>
-
-                <h2 id="cameraName">
-                    Bank Safe
-                </h2>
-
-                <div class="camera-placeholder">
-
-                    <span>LIVE BANK FEED</span>
-
-                    <small id="cameraMovement">
-                        NO MOVEMENT DETECTED
-                    </small>
-
-                </div>
-
-            </div>
-
-
-            <aside class="camera-map">
-
-                <div class="camera-map-heading">
-
-                    <span>NEEGY BANK</span>
-
-                    <small>17 CAMERA NETWORK</small>
-
-                </div>
-
-                <div id="cameraGrid" class="camera-grid"></div>
-
-                <p id="selectedCameraName">
-                    Bank Safe
-                </p>
-
-            </aside>
-
-        </section>
-
-    </main>
-
-
-    <!-- RESULT SCREEN -->
-    <main id="resultScreen" class="screen result-screen hidden">
-
-        <section class="result-card">
-
-            <p id="resultLabel">
-                SHIFT COMPLETE
-            </p>
-
-            <h2 id="resultTitle">
-                6:00 AM
-            </h2>
-
-            <button id="returnMenuButton">
-                RETURN TO MENU
-            </button>
-
-        </section>
-
-    </main>
-
-
-    <script src="js/game.js"></script>
+    <script
+        type="module"
+        src="js/game.js"
+    ></script>
 
 </body>
 </html>
