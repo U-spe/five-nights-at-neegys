@@ -2,7 +2,8 @@
     {
         "id": "regular",
         "name": "Regular Neegy",
-        "role": "Direct attacker",
+        "behavior": "wanderer",
+
         "startCamera": "1a",
 
         "route": [
@@ -15,12 +16,26 @@
 
         "attackSide": "left",
 
-        "mechanic": "Moves through the left side of the bank. Close the left door when he reaches Camera 3E."
+        "movementInterval": 4.9,
+        "backtrackChance": 0.2,
+        "doorGraceSeconds": 6,
+
+        "aiByNight": [
+            3,
+            5,
+            7,
+            10,
+            12,
+            15,
+            20
+        ]
     },
+
     {
         "id": "girl",
         "name": "Girl Neegy",
-        "role": "Patient attacker",
+        "behavior": "wanderer",
+
         "startCamera": "1a",
 
         "route": [
@@ -33,12 +48,26 @@
 
         "attackSide": "right",
 
-        "mechanic": "Moves through the right side and sometimes waits before advancing."
+        "movementInterval": 5,
+        "backtrackChance": 0.3,
+        "doorGraceSeconds": 7,
+
+        "aiByNight": [
+            1,
+            3,
+            5,
+            8,
+            11,
+            14,
+            20
+        ]
     },
+
     {
         "id": "rapper",
         "name": "Rapper Neegy",
-        "role": "Camera stalker",
+        "behavior": "stalker",
+
         "startCamera": "1a",
 
         "route": [
@@ -52,12 +81,26 @@
 
         "attackSide": "right",
 
-        "mechanic": "Moves faster when ignored. Watching his camera slows him down."
+        "movementInterval": 3.1,
+        "backtrackChance": 0,
+        "doorGraceSeconds": 0,
+
+        "aiByNight": [
+            0,
+            0,
+            2,
+            4,
+            7,
+            10,
+            20
+        ]
     },
+
     {
         "id": "farmer",
         "name": "Farmer Neegy",
-        "role": "Runner",
+        "behavior": "runner",
+
         "startCamera": "2f",
 
         "route": [
@@ -68,12 +111,26 @@
 
         "attackSide": "left",
 
-        "mechanic": "Builds up a rush when Camera 2F is ignored. Watching him resets the buildup."
+        "movementInterval": 5.1,
+        "backtrackChance": 0,
+        "doorGraceSeconds": 0,
+
+        "aiByNight": [
+            1,
+            2,
+            4,
+            6,
+            9,
+            12,
+            20
+        ]
     },
+
     {
         "id": "banana",
         "name": "Banana Neegy",
-        "role": "System disruptor",
+        "behavior": "corruptor",
+
         "startCamera": "3b",
 
         "route": [
@@ -86,6 +143,18 @@
 
         "attackSide": "right",
 
-        "mechanic": "Causes camera interference. Switch cameras to clear the signal."
+        "movementInterval": 5.4,
+        "backtrackChance": 0.15,
+        "doorGraceSeconds": 5,
+
+        "aiByNight": [
+            0,
+            0,
+            0,
+            3,
+            6,
+            10,
+            20
+        ]
     }
 ]
