@@ -1,0 +1,51 @@
+{
+    "title": "5 Nights at Neegys",
+    "location": "Neegy National Bank",
+
+    "nightLengthSeconds": 360,
+
+    "hourLabels": [
+        "12 AM",
+        "1 AM",
+        "2 AM",
+        "3 AM",
+        "4 AM",
+        "5 AM",
+        "6 AM"
+    ],
+
+    "powerDrainPerMinute": {
+        "clock": 1,
+        "cameras": 2.5,
+        "lights": 2,
+        "doors": 4
+    },
+
+    "hourBoosts": [
+        {
+            "hour": 2,
+            "enemies": ["regular"],
+            "amount": 1
+        },
+        {
+            "hour": 3,
+            "enemies": [
+                "regular",
+                "girl",
+                "farmer",
+                "banana"
+            ],
+            "amount": 1
+        },
+        {
+            "hour": 4,
+            "enemies": [
+                "regular",
+                "girl",
+                "farmer",
+                "banana"
+            ],
+            "amount": 1
+        }
+    ]
+}
