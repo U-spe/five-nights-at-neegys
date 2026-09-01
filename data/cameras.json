@@ -1,0 +1,104 @@
+[
+    {
+        "id": "1a",
+        "code": "1A",
+        "name": "Bank Safe",
+        "zone": "bank"
+    },
+    {
+        "id": "1b",
+        "code": "1B",
+        "name": "Teller Room 1",
+        "zone": "bank"
+    },
+    {
+        "id": "1c",
+        "code": "1C",
+        "name": "Main Entrance",
+        "zone": "bank"
+    },
+    {
+        "id": "1d",
+        "code": "1D",
+        "name": "Main Room",
+        "zone": "bank"
+    },
+    {
+        "id": "2a",
+        "code": "2A",
+        "name": "Teller Room 2",
+        "zone": "bank"
+    },
+    {
+        "id": "2b",
+        "code": "2B",
+        "name": "Men's Bathroom",
+        "zone": "bank"
+    },
+    {
+        "id": "2c",
+        "code": "2C",
+        "name": "Women's Bathroom",
+        "zone": "bank"
+    },
+    {
+        "id": "3a",
+        "code": "3A",
+        "name": "Teller Room 3",
+        "zone": "bank"
+    },
+    {
+        "id": "3b",
+        "code": "3B",
+        "name": "Stock Market Room",
+        "zone": "bank"
+    },
+    {
+        "id": "3d",
+        "code": "3D",
+        "name": "Teller Room 4",
+        "zone": "bank"
+    },
+    {
+        "id": "2d",
+        "code": "2D",
+        "name": "Main Desk",
+        "zone": "bank"
+    },
+    {
+        "id": "1e",
+        "code": "1E",
+        "name": "Left Hallway",
+        "zone": "hall"
+    },
+    {
+        "id": "2e",
+        "code": "2E",
+        "name": "Right Hallway",
+        "zone": "hall"
+    },
+    {
+        "id": "3e",
+        "code": "3E",
+        "name": "Left Door",
+        "zone": "hall"
+    },
+    {
+        "id": "4e",
+        "code": "4E",
+        "name": "Right Door",
+        "zone": "hall"
+    },
+    {
+        "id": "1f",
+        "code": "1F",
+        "name": "Office (Locked)",
+        "zone": "office"
+    },
+    {
+        "id": "2f",
+        "code": "2F",
+        "name": "Teller Room 5",
+        "zone": "bank"
+    }
+]
