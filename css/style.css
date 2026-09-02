@@ -2,9 +2,9 @@
   color-scheme: dark;
   font-family: "VT323", monospace;
 
-  --green: #77ff9c;
-  --red: #ff493f;
-  --panel: rgba(3, 7, 5, 0.88);
+  --green: #9cff79;
+  --red: #d73931;
+  --gold: #c8a95d;
 }
 
 * {
@@ -23,6 +23,7 @@ body {
 body {
   display: grid;
   place-items: center;
+  color: #fff;
   user-select: none;
   -webkit-user-select: none;
 }
@@ -37,8 +38,17 @@ button {
 
 #gameShell {
   position: relative;
-  width: min(100vw, 177.7778vh);
-  aspect-ratio: 16 / 9;
+
+  width: min(
+    100vw,
+    177.7778vh
+  );
+
+  height: min(
+    100vh,
+    56.25vw
+  );
+
   overflow: hidden;
   isolation: isolate;
   background: #000;
@@ -48,9 +58,11 @@ button {
 #sceneCanvas {
   position: absolute;
   inset: 0;
+  z-index: 0;
   width: 100%;
   height: 100%;
   display: block;
+  background: #000;
 }
 
 #scanlines,
@@ -63,18 +75,18 @@ button {
 
 #scanlines {
   z-index: 8;
-  opacity: 0.23;
+  opacity: 0.28;
 
   background:
     radial-gradient(
       circle at center,
       transparent 48%,
-      rgba(0, 0, 0, 0.78) 115%
+      rgba(0, 0, 0, 0.8) 118%
     ),
     repeating-linear-gradient(
       0deg,
-      rgba(255, 255, 255, 0.025) 0 1px,
-      rgba(0, 0, 0, 0.18) 2px 4px
+      transparent 0 2px,
+      rgba(0, 0, 0, 0.2) 3px 4px
     );
 
   mix-blend-mode: multiply;
@@ -84,7 +96,7 @@ button {
   z-index: 7;
   opacity: 0;
 
-  background-image:
+  background:
     repeating-radial-gradient(
       circle at 13% 31%,
       rgba(255, 255, 255, 0.2) 0 1px,
@@ -93,22 +105,22 @@ button {
     repeating-linear-gradient(
       91deg,
       transparent 0 7px,
-      rgba(255, 255, 255, 0.08) 8px,
+      rgba(255, 255, 255, 0.09) 8px,
       transparent 9px 15px
     );
 }
 
 #gameShell.monitor-open #cameraNoise {
-  opacity: 0.26;
-  animation: noiseShift 0.16s steps(2) infinite;
+  opacity: 0.24;
+  animation: noiseShift 0.15s steps(2) infinite;
 }
 
 #cameraNoise.switching {
-  animation: cameraSwitch 0.17s steps(2) 1;
+  animation: cameraSwitch 0.18s steps(2) 1;
 }
 
 #flash {
-  z-index: 40;
+  z-index: 60;
   opacity: 0;
   background: #fff;
 }
@@ -117,50 +129,80 @@ button {
   animation: flash 0.28s steps(2) 3;
 }
 
+/* HUD */
+
 #hud {
   position: absolute;
   inset: 0;
   z-index: 12;
-  color: #fff;
   pointer-events: none;
+  color: #fff;
+
   text-shadow:
-    2px 2px #000,
-    -1px -1px #000;
+    2px 2px 0 #000,
+    -1px -1px 0 #000;
 }
 
 #clockHud {
   position: absolute;
-  top: 2.5%;
-  right: 2.8%;
+  top: 2.8%;
+  right: 2.5%;
+  min-width: 132px;
+  padding: 0.2rem 0.55rem 0.35rem;
   display: grid;
   justify-items: end;
-  line-height: 0.9;
+  line-height: 0.83;
+  border-right: 4px solid rgba(255, 255, 255, 0.82);
+
+  background:
+    linear-gradient(
+      90deg,
+      transparent,
+      rgba(0, 0, 0, 0.5)
+    );
 }
 
 #clockHud strong {
-  font-size: clamp(1.7rem, 3.4vw, 3.4rem);
+  font-size: clamp(2rem, 4.2vw, 4.2rem);
+  font-weight: 400;
 }
 
 #clockHud span {
-  font-size: clamp(1rem, 1.8vw, 1.75rem);
+  color: #c9d1cc;
+  font-size: clamp(1rem, 1.7vw, 1.65rem);
 }
 
 #powerHud {
   position: absolute;
   left: 2.5%;
-  bottom: 3%;
+  bottom: 3.2%;
+  min-width: 238px;
+  padding: 0.45rem 0.7rem;
+
   display: grid;
-  grid-template-columns: auto minmax(80px, 10vw);
+  grid-template-columns: auto minmax(96px, 10vw);
   align-items: center;
-  gap: 0.15rem 0.55rem;
+  gap: 0.15rem 0.65rem;
+
+  border-left: 4px solid rgba(255, 255, 255, 0.82);
+
+  background:
+    linear-gradient(
+      90deg,
+      rgba(0, 0, 0, 0.72),
+      transparent
+    );
+
   font-size: clamp(1rem, 1.8vw, 1.75rem);
+  line-height: 1;
 }
 
 #powerMeter {
   width: 100%;
-  height: clamp(10px, 1.15vw, 16px);
-  border: 2px solid #fff;
-  background: #090909;
+  height: clamp(11px, 1.2vw, 17px);
+  padding: 2px;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  background: #060806;
 }
 
 #powerFill {
@@ -168,6 +210,8 @@ button {
   width: 100%;
   height: 100%;
   background: var(--green);
+  box-shadow: 0 0 8px rgba(156, 255, 121, 0.45);
+
   transition:
     width 0.2s,
     background 0.2s;
@@ -175,124 +219,226 @@ button {
 
 #usageBars {
   display: flex;
+  align-items: end;
   gap: 3px;
-  height: 16px;
+  height: 17px;
 }
 
 #usageBars i {
-  width: 9px;
-  border: 1px solid rgba(255, 255, 255, 0.65);
-  background: #172019;
+  width: 10px;
+  height: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  background: #111713;
+}
+
+#usageBars i:nth-child(2) {
+  height: 10px;
+}
+
+#usageBars i:nth-child(3) {
+  height: 12px;
+}
+
+#usageBars i:nth-child(4) {
+  height: 14px;
+}
+
+#usageBars i:nth-child(5) {
+  height: 16px;
+}
+
+#usageBars i:nth-child(6) {
+  height: 17px;
 }
 
 #usageBars i.active {
   background: var(--green);
+  box-shadow: 0 0 5px var(--green);
 }
 
 #usageBars i.hot {
-  background: #ffe45c;
+  background: #ffe35f;
+  box-shadow: 0 0 5px #ffe35f;
 }
 
 #usageBars i.danger {
   background: var(--red);
+  box-shadow: 0 0 6px var(--red);
 }
+
+/* Door panels */
 
 .door-panel {
   position: absolute;
   z-index: 15;
-  top: 41%;
+  top: 39%;
+  width: clamp(70px, 7.3vw, 106px);
+  padding: 7px;
   display: grid;
-  gap: 0.5rem;
-  width: clamp(62px, 7.2vw, 104px);
-  padding: 0.55rem;
-  border: 3px ridge #646a67;
+  gap: 7px;
+  border: 3px ridge #777d79;
 
   background:
     linear-gradient(
       90deg,
-      #151817,
-      #454946 50%,
-      #141615
+      #161917,
+      #555a56 48%,
+      #171a18
     );
 
-  box-shadow: 0 5px 18px #000;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.85);
+}
+
+.door-panel::before {
+  content: "SECURITY";
+  display: block;
+  padding: 2px 0 4px;
+  color: #161917;
+  background: #9a9f9b;
+  font-size: clamp(0.62rem, 0.9vw, 0.86rem);
+  letter-spacing: 0.1em;
+  text-align: center;
 }
 
 .left-panel {
-  left: 1.8%;
+  left: 2%;
 }
 
 .right-panel {
-  right: 1.8%;
+  right: 2%;
 }
 
 .door-panel button {
-  min-height: clamp(42px, 5vw, 68px);
-  border: 2px outset #6b746d;
-  color: #d8ddd9;
-  background: #161a17;
-  font-size: clamp(0.8rem, 1.5vw, 1.4rem);
-  letter-spacing: 0.05em;
+  position: relative;
+  min-height: clamp(48px, 5.3vw, 76px);
+  border: 3px outset #68716b;
+  color: #bcc3be;
+
+  background:
+    linear-gradient(
+      #1e2420,
+      #0b0e0c
+    );
+
+  font-size: clamp(0.9rem, 1.6vw, 1.45rem);
+  letter-spacing: 0.07em;
   cursor: pointer;
+  text-shadow: 1px 1px #000;
+}
+
+.door-panel button::before {
+  content: "";
+  position: absolute;
+  top: 6px;
+  left: 8px;
+  right: 8px;
+  height: 7px;
+  border: 1px solid #050605;
+  background: #1b211c;
 }
 
 .door-panel button:hover {
-  filter: brightness(1.25);
+  filter: brightness(1.22);
+}
+
+.door-panel button:active {
+  border-style: inset;
 }
 
 .door-panel .door-button.active {
   color: #fff;
-  border-color: #ff7972;
-  background: #6c1714;
-  box-shadow: 0 0 18px #ff2218;
+  border-color: #782b26;
+
+  background:
+    linear-gradient(
+      #4b1714,
+      #180605
+    );
+}
+
+.door-panel .door-button.active::before {
+  background: #ff392f;
+  box-shadow: 0 0 12px #ff3027;
 }
 
 .door-panel .light-button.active {
-  color: #171717;
-  border-color: #fff9c8;
-  background: #fff5a2;
-  box-shadow: 0 0 22px #fff4a0;
+  color: #111;
+  border-color: #d9d0a0;
+
+  background:
+    linear-gradient(
+      #fffbd5,
+      #b9aa63
+    );
+
+  text-shadow: none;
 }
+
+.door-panel .light-button.active::before {
+  background: #fff6aa;
+  box-shadow: 0 0 13px #fff3a0;
+}
+
+/* Monitor button */
 
 #monitorButton {
   position: absolute;
   z-index: 25;
   left: 50%;
-  bottom: 1.7%;
+  bottom: 0;
   translate: -50% 0;
-  width: min(42%, 490px);
-  height: clamp(34px, 5vw, 57px);
+
+  width: min(47%, 600px);
+  height: clamp(43px, 5.3vw, 67px);
   overflow: hidden;
-  border: 2px solid rgba(255, 255, 255, 0.7);
+
+  border: 2px solid rgba(210, 220, 213, 0.75);
   border-bottom: 0;
-  border-radius: 7px 7px 0 0;
-  color: #fff;
+  border-radius: 5px 5px 0 0;
+
+  color: #d8ddd9;
 
   background:
+    linear-gradient(
+      rgba(255, 255, 255, 0.07),
+      transparent
+    ),
     repeating-linear-gradient(
       90deg,
-      #0b0d0c 0 16px,
-      #1b201d 17px 19px
+      #090b0a 0 18px,
+      #1e2320 19px 21px
     );
 
-  font-size: clamp(1rem, 2vw, 1.8rem);
+  font-size: clamp(1rem, 2vw, 1.75rem);
   letter-spacing: 0.12em;
   cursor: pointer;
-  box-shadow: 0 -5px 20px #000;
+  box-shadow: 0 -6px 25px rgba(0, 0, 0, 0.85);
 
   transition:
-    background 0.15s,
-    height 0.15s;
+    height 0.15s,
+    filter 0.15s;
+}
+
+#monitorButton::before {
+  content: "";
+  position: absolute;
+  top: 5px;
+  left: 18%;
+  right: 18%;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.25);
 }
 
 #monitorButton:hover {
-  height: clamp(40px, 6vw, 68px);
-  background-color: #28322d;
+  height: clamp(50px, 6.3vw, 78px);
+  filter: brightness(1.25);
 }
 
 #gameShell.monitor-open #monitorButton {
-  width: min(32%, 380px);
+  width: min(34%, 430px);
 }
+
+/* Camera overlay */
 
 #cameraInterface {
   position: absolute;
@@ -305,79 +451,228 @@ button {
 
 #cameraHeading {
   position: absolute;
-  top: 3%;
+  top: 3.5%;
   left: 3%;
+  min-width: 250px;
+  padding: 0.4rem 0.7rem;
   display: grid;
-  line-height: 1;
+  line-height: 0.86;
+  border-left: 4px solid var(--green);
+
+  background:
+    linear-gradient(
+      90deg,
+      rgba(0, 0, 0, 0.7),
+      transparent
+    );
 }
 
 #cameraHeading strong {
   font-size: clamp(2rem, 4vw, 4rem);
+  font-weight: 400;
 }
 
 #cameraHeading > span {
-  font-size: clamp(1rem, 2vw, 2rem);
+  color: #c4d0c7;
+  font-size: clamp(1rem, 1.8vw, 1.7rem);
 }
 
 #recordingDot {
-  margin-top: 0.5rem;
-  color: #ff433b;
+  margin-top: 0.55rem;
+  color: #ff463e !important;
   animation: blink 1s steps(1) infinite;
 }
+
+/* FNAF-style camera map */
 
 #cameraMap {
   position: absolute;
   right: 2.2%;
-  bottom: 11%;
-  width: min(36%, 430px);
-  min-width: 285px;
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 5px;
-  padding: 10px;
-  border: 2px solid rgba(220, 255, 228, 0.75);
-  background: rgba(1, 8, 4, 0.75);
+  bottom: 10.5%;
+  width: min(35vw, 430px);
+  height: min(28vw, 335px);
+  min-width: 350px;
+  min-height: 273px;
+  border: 2px solid rgba(202, 225, 208, 0.75);
+
+  background:
+    linear-gradient(
+      90deg,
+      transparent 49.6%,
+      rgba(156, 255, 121, 0.16) 50%,
+      transparent 50.4%
+    ),
+    linear-gradient(
+      0deg,
+      transparent 49.6%,
+      rgba(156, 255, 121, 0.13) 50%,
+      transparent 50.4%
+    ),
+    repeating-linear-gradient(
+      0deg,
+      transparent 0 38px,
+      rgba(156, 255, 121, 0.07) 39px 40px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      transparent 0 53px,
+      rgba(156, 255, 121, 0.07) 54px 55px
+    ),
+    rgba(2, 9, 5, 0.82);
+
+  box-shadow:
+    inset 0 0 30px rgba(0, 0, 0, 0.9),
+    0 0 24px rgba(0, 0, 0, 0.75);
+
   pointer-events: auto;
-  transform: perspective(500px) rotateX(1deg);
+}
+
+.map-title {
+  position: absolute;
+  top: -27px;
+  right: -2px;
+  padding: 2px 8px;
+  border: 1px solid rgba(202, 225, 208, 0.75);
+  border-bottom: 0;
+  color: #c7d7cb;
+  background: rgba(2, 9, 5, 0.9);
+  font-size: clamp(0.8rem, 1.25vw, 1.15rem);
+  letter-spacing: 0.1em;
+}
+
+.map-office {
+  position: absolute;
+  left: 42%;
+  bottom: 5%;
+  width: 16%;
+  height: 10%;
+  display: grid;
+  place-items: center;
+  border: 2px solid #fff;
+  color: #111;
+  background: #fff;
+  font-size: clamp(0.7rem, 1.2vw, 1rem);
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.35);
 }
 
 .camera-map-button {
-  min-height: clamp(31px, 3.7vw, 47px);
-  padding: 3px;
-  border: 1px solid #a5c2ab;
-  color: #cfead5;
-  background: #101b14;
-  font-size: clamp(0.75rem, 1.35vw, 1.2rem);
-  line-height: 0.85;
+  position: absolute;
+  width: 15.5%;
+  height: 10.5%;
+  min-height: 0;
+  padding: 0;
+  border: 1px solid #94aa99;
+  color: #c3cec6;
+  background: #0c1710;
+  font-size: clamp(0.66rem, 1.18vw, 1.1rem);
+  line-height: 1;
   cursor: pointer;
-}
-
-.camera-map-button small {
-  display: block;
-  opacity: 0.68;
-  font-size: 0.7em;
+  box-shadow: inset 0 0 8px #000;
 }
 
 .camera-map-button:hover {
-  background: #274431;
+  color: #fff;
+  background: #25472e;
 }
 
 .camera-map-button.active {
-  color: #071108;
-  background: #9affb0;
-  box-shadow: 0 0 16px #65ff8b;
+  color: #061006;
+  border-color: #d9ffe1;
+  background: var(--green);
+  box-shadow: 0 0 14px var(--green);
 }
 
-.camera-map-button.enemy {
-  border-color: #ffd35a;
+.camera-map-button.enemy:not(.active) {
+  border-color: #d9b95d;
+}
+
+.camera-map-button[data-camera="1a"] {
+  left: 4%;
+  top: 13%;
+}
+
+.camera-map-button[data-camera="3b"] {
+  left: 4%;
+  top: 28%;
+}
+
+.camera-map-button[data-camera="2f"] {
+  left: 4%;
+  top: 43%;
+}
+
+.camera-map-button[data-camera="3a"] {
+  left: 23%;
+  top: 28%;
+}
+
+.camera-map-button[data-camera="2b"] {
+  left: 23%;
+  top: 43%;
+}
+
+.camera-map-button[data-camera="1b"] {
+  left: 23%;
+  top: 58%;
+}
+
+.camera-map-button[data-camera="1d"] {
+  left: 42%;
+  top: 28%;
+}
+
+.camera-map-button[data-camera="2d"] {
+  left: 42%;
+  top: 43%;
+}
+
+.camera-map-button[data-camera="1c"] {
+  left: 42%;
+  top: 58%;
+}
+
+.camera-map-button[data-camera="3d"] {
+  left: 61%;
+  top: 28%;
+}
+
+.camera-map-button[data-camera="2c"] {
+  left: 61%;
+  top: 43%;
+}
+
+.camera-map-button[data-camera="2a"] {
+  left: 61%;
+  top: 58%;
+}
+
+.camera-map-button[data-camera="1e"] {
+  left: 23%;
+  top: 75%;
+}
+
+.camera-map-button[data-camera="3e"] {
+  left: 42%;
+  top: 75%;
+}
+
+.camera-map-button[data-camera="4e"] {
+  left: 61%;
+  top: 75%;
+}
+
+.camera-map-button[data-camera="2e"] {
+  left: 80%;
+  top: 75%;
 }
 
 #cameraHelp {
   position: absolute;
   right: 2.5%;
-  bottom: 7.2%;
+  bottom: 6.3%;
+  color: #aab4ac;
   font-size: clamp(0.8rem, 1.2vw, 1.1rem);
-  opacity: 0.8;
+  letter-spacing: 0.08em;
 }
 
 #message {
@@ -387,12 +682,15 @@ button {
   left: 50%;
   translate: -50% 0;
   padding: 0.3rem 1rem;
-  color: #ff554c;
-  background: rgba(0, 0, 0, 0.65);
+  border-left: 4px solid var(--red);
+  color: #ff5b53;
+  background: rgba(0, 0, 0, 0.78);
   font-size: clamp(1.4rem, 3vw, 3rem);
   text-align: center;
   text-shadow: 2px 2px #000;
 }
+
+/* Restored main menu */
 
 .screen-card {
   position: absolute;
@@ -400,124 +698,224 @@ button {
   z-index: 50;
   overflow: hidden;
   color: #fff;
+  background: #010201;
+}
+
+#titleScreen {
+  background:
+    linear-gradient(
+      90deg,
+      rgba(1, 2, 1, 0.98) 0%,
+      rgba(2, 4, 2, 0.92) 43%,
+      rgba(2, 5, 3, 0.6) 67%,
+      rgba(0, 0, 0, 0.88) 100%
+    ),
+    radial-gradient(
+      circle at 78% 48%,
+      rgba(60, 103, 68, 0.18),
+      transparent 28%
+    );
+}
+
+#titleScreen::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: 0.2;
+  pointer-events: none;
 
   background:
-    radial-gradient(
-      circle at 75% 45%,
-      rgba(31, 104, 59, 0.16),
-      transparent 22%
-    ),
     repeating-linear-gradient(
       0deg,
-      rgba(255, 255, 255, 0.018) 0 1px,
-      transparent 2px 5px
+      transparent 0 3px,
+      rgba(255, 255, 255, 0.05) 4px
+    );
+}
+
+.title-grid {
+  position: absolute;
+  inset: 0 0 0 48%;
+  opacity: 0.13;
+
+  background:
+    linear-gradient(
+      90deg,
+      transparent 49.7%,
+      var(--green) 50%,
+      transparent 50.3%
     ),
-    #010202;
+    linear-gradient(
+      0deg,
+      transparent 49.7%,
+      var(--green) 50%,
+      transparent 50.3%
+    ),
+    repeating-radial-gradient(
+      circle at 72% 48%,
+      transparent 0 39px,
+      rgba(156, 255, 121, 0.25) 40px 41px
+    );
+
+  animation: menuPulse 4s ease-in-out infinite;
 }
 
 .title-copy {
   position: absolute;
-  top: 13%;
-  left: 8%;
-  z-index: 2;
+  z-index: 3;
+  top: 10.5%;
+  left: 7.2%;
+  width: min(39%, 465px);
+}
+
+#titleScreen h1 {
+  margin: 0;
+  display: grid;
+  justify-items: start;
+  line-height: 0.7;
+  font-weight: 400;
+  letter-spacing: -0.025em;
+  text-shadow: 4px 4px #151a16;
+}
+
+#titleScreen h1 span {
+  font-size: clamp(4rem, 8vw, 8.7rem);
+  font-weight: 400;
+}
+
+#titleScreen h1 small {
+  margin: 0.25rem 0 0.1rem 0.45rem;
+  color: #929893;
+  font-size: clamp(2rem, 3.8vw, 4rem);
+  font-weight: 400;
+}
+
+#titleScreen h1 b {
+  color: var(--green);
+  font-size: clamp(5.1rem, 10.4vw, 11.2rem);
+  font-weight: 400;
 }
 
 .eyebrow {
-  color: var(--green);
-  font-size: clamp(1rem, 1.8vw, 1.7rem);
-  letter-spacing: 0.2em;
+  margin: 1rem 0 1.9rem 0.35rem;
+  color: var(--gold);
+  font-size: clamp(1rem, 1.75vw, 1.65rem);
+  letter-spacing: 0.14em;
 }
 
-h1 {
-  margin: 0.2rem 0 1rem;
-  font-size: clamp(4rem, 10.7vw, 10rem);
-  font-weight: 400;
-  line-height: 0.72;
-  letter-spacing: -0.03em;
-  text-shadow: 5px 5px #19201c;
+#titleMenu {
+  display: grid;
+  gap: 7px;
+  width: min(100%, 350px);
 }
 
-.title-warning {
-  color: #aab1ac;
-  font-size: clamp(1.1rem, 2.15vw, 2rem);
-}
+.menu-item {
+  position: relative;
+  height: clamp(43px, 5vw, 58px);
+  padding: 0 14px 0 19px;
 
-#startButton,
-#restartButton {
-  padding: 0.55rem 1.5rem;
-  border: 1px solid #fff;
-  color: #fff;
-  background: #101310;
-  font-size: clamp(1.3rem, 2.7vw, 2.5rem);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  border: 0;
+  border-left: 2px solid #424843;
+  color: #929893;
+  background: rgba(0, 0, 0, 0.46);
+  font-size: clamp(1.35rem, 2.3vw, 2.25rem);
+  text-align: left;
   cursor: pointer;
 }
 
-#startButton:hover,
-#restartButton:hover {
-  color: #071108;
-  background: var(--green);
-}
-
-.controls-copy {
-  opacity: 0.65;
-  font-size: clamp(0.8rem, 1.3vw, 1.2rem);
-}
-
-.copyright {
+.menu-item::before {
+  content: "";
   position: absolute;
-  left: 2%;
-  bottom: 2%;
-  opacity: 0.5;
-  font-size: clamp(0.7rem, 1vw, 1rem);
-}
-
-#titleFigure {
-  position: absolute;
-  right: 12%;
-  top: 18%;
-  width: min(25vw, 300px);
-  height: 67%;
-
-  filter:
-    drop-shadow(
-      0 0 25px rgba(73, 255, 124, 0.18)
-    );
-}
-
-#titleFigure i,
-#titleFigure b,
-#titleFigure em {
-  position: absolute;
-  display: block;
-  background: #050706;
-}
-
-#titleFigure i {
+  left: -2px;
   top: 0;
-  left: 32%;
-  width: 36%;
+  bottom: 0;
+  width: 2px;
+  background: #424843;
+}
+
+.menu-item small {
+  color: #555b56;
+  font-size: 0.58em;
+  letter-spacing: 0.06em;
+}
+
+.menu-item:hover,
+.menu-item.active {
+  color: var(--green);
+  background: rgba(156, 255, 121, 0.12);
+}
+
+.menu-item:hover::before,
+.menu-item.active::before {
+  width: 6px;
+  background: var(--green);
+  box-shadow: 0 0 12px rgba(156, 255, 121, 0.55);
+}
+
+.menu-item.active small {
+  color: #c6d1c8;
+}
+
+.bank-seal {
+  position: absolute;
+  z-index: 2;
+  right: 10%;
+  top: 20%;
+  width: min(30vw, 365px);
   aspect-ratio: 1;
-  border: 7px solid #2a332d;
+  display: grid;
+  place-items: center;
+
+  border:
+    clamp(15px, 2.3vw, 30px)
+    solid
+    #172019;
+
   border-radius: 50%;
-  background: #050706;
+  color: #243027;
+
+  box-shadow:
+    inset 0 0 0 5px #344039,
+    0 0 70px rgba(156, 255, 121, 0.06);
 }
 
-#titleFigure b {
-  top: 25%;
-  left: 46%;
-  width: 9%;
-  height: 45%;
-  border-radius: 20px;
+.seal-ring {
+  width: 52%;
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  border: 4px solid #344039;
+  border-radius: 50%;
+  background: #080b09;
 }
 
-#titleFigure em {
-  top: 60%;
-  left: 20%;
-  width: 60%;
-  height: 8%;
-  rotate: 90deg;
-  border-radius: 20px;
-  box-shadow: 0 85px #050706;
+.seal-ring b {
+  font-family: Georgia, serif;
+  font-size: clamp(6rem, 14vw, 11rem);
+  font-weight: 400;
+}
+
+.bank-seal > span {
+  position: absolute;
+  bottom: 10%;
+  font-size: clamp(0.8rem, 1.5vw, 1.35rem);
+  letter-spacing: 0.22em;
+}
+
+.title-footer {
+  position: absolute;
+  z-index: 3;
+  left: 2.2%;
+  right: 2.2%;
+  bottom: 2.2%;
+  display: flex;
+  justify-content: space-between;
+  color: #5e655f;
+  font-size: clamp(0.78rem, 1.2vw, 1.1rem);
+  letter-spacing: 0.08em;
 }
 
 #nightIntro,
@@ -525,6 +923,14 @@ h1 {
   display: grid;
   place-content: center;
   text-align: center;
+
+  background:
+    repeating-linear-gradient(
+      0deg,
+      transparent 0 3px,
+      rgba(255, 255, 255, 0.025) 4px
+    ),
+    #000;
 }
 
 #nightIntro p,
@@ -545,9 +951,25 @@ h1 {
   color: var(--green);
 }
 
+#restartButton {
+  justify-self: center;
+  padding: 0.5rem 1.7rem;
+  border: 1px solid #777;
+  border-left: 5px solid var(--green);
+  color: #cfd4d0;
+  background: #0d100e;
+  font-size: clamp(1.4rem, 2.7vw, 2.6rem);
+  cursor: pointer;
+}
+
+#restartButton:hover {
+  color: #071008;
+  background: var(--green);
+}
+
 @keyframes blink {
   50% {
-    opacity: 0.25;
+    opacity: 0.2;
   }
 }
 
@@ -589,34 +1011,76 @@ h1 {
   }
 }
 
-@media (max-width: 700px), (max-height: 500px) {
+@keyframes menuPulse {
+  50% {
+    opacity: 0.2;
+    scale: 1.01;
+  }
+}
+
+@media (max-width: 760px), (max-height: 520px) {
+  .title-copy {
+    top: 7%;
+    left: 6%;
+    width: 47%;
+  }
+
+  .eyebrow {
+    margin: 0.55rem 0 0.75rem 0.2rem;
+  }
+
+  #titleMenu {
+    gap: 4px;
+    width: 85%;
+  }
+
+  .menu-item {
+    height: 36px;
+    font-size: 1.1rem;
+  }
+
+  .bank-seal {
+    right: 8%;
+    top: 18%;
+    width: 29vw;
+  }
+
   #cameraMap {
     right: 1%;
-    bottom: 12%;
-    width: 42%;
-    min-width: 0;
-    padding: 5px;
-    gap: 3px;
+    bottom: 13%;
+    width: 38vw;
+    min-width: 275px;
+    min-height: 215px;
   }
 
   .camera-map-button {
-    min-height: 27px;
-    font-size: 0.67rem;
+    font-size: 0.58rem;
   }
 
-  .camera-map-button small,
-  #cameraHelp {
+  #cameraHelp,
+  .map-title {
     display: none;
   }
 
   .door-panel {
-    top: 45%;
-    padding: 0.3rem;
-    gap: 0.25rem;
+    top: 42%;
+    padding: 4px;
+    gap: 4px;
     border-width: 2px;
   }
 
+  .door-panel::before {
+    display: none;
+  }
+
   #powerHud {
+    left: 1.5%;
     bottom: 2%;
+    min-width: 190px;
+    padding: 0.25rem 0.4rem;
+  }
+
+  .title-footer {
+    font-size: 0.64rem;
   }
 }
