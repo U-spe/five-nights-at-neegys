@@ -9,7 +9,10 @@
   /** @typedef {{id:string,name:string,color:number,behavior:EnemyBehavior,start:string,route:string[],side:DoorSide,interval:number,backtrack:number,grace:number,ai:number[]}} EnemyConfig */
   /** @typedef {EnemyConfig & {camera:string,previousCamera:string,routeIndex:number,nextMove:number,moveStartedAt:number,moveDuration:number,insideOffice:boolean,breaching:boolean,breachAt:number,attackAt:number,pressure:number}} RuntimeEnemy */
 
-  const canvas = /** @type {HTMLCanvasElement} */ (document.querySelector("#sceneCanvas"));
+  const canvas = /** @type {HTMLCanvasElement} */ (
+    document.querySelector("#sceneCanvas")
+  );
+
   const gameShell = document.querySelector("#gameShell");
   const titleScreen = document.querySelector("#titleScreen");
   const nightIntro = document.querySelector("#nightIntro");
@@ -21,16 +24,37 @@
   const cameraNoise = document.querySelector("#cameraNoise");
   const flash = document.querySelector("#flash");
   const message = document.querySelector("#message");
-  const monitorButton = /** @type {HTMLButtonElement} */ (document.querySelector("#monitorButton"));
+
+  const monitorButton = /** @type {HTMLButtonElement} */ (
+    document.querySelector("#monitorButton")
+  );
+
   const monitorButtonText = document.querySelector("#monitorButtonText");
-  const leftDoorButton = /** @type {HTMLButtonElement} */ (document.querySelector("#leftDoorButton"));
-  const rightDoorButton = /** @type {HTMLButtonElement} */ (document.querySelector("#rightDoorButton"));
-  const leftLightButton = /** @type {HTMLButtonElement} */ (document.querySelector("#leftLightButton"));
-  const rightLightButton = /** @type {HTMLButtonElement} */ (document.querySelector("#rightLightButton"));
+
+  const leftDoorButton = /** @type {HTMLButtonElement} */ (
+    document.querySelector("#leftDoorButton")
+  );
+
+  const rightDoorButton = /** @type {HTMLButtonElement} */ (
+    document.querySelector("#rightDoorButton")
+  );
+
+  const leftLightButton = /** @type {HTMLButtonElement} */ (
+    document.querySelector("#leftLightButton")
+  );
+
+  const rightLightButton = /** @type {HTMLButtonElement} */ (
+    document.querySelector("#rightLightButton")
+  );
+
   const hourLabel = document.querySelector("#hourLabel");
   const nightLabel = document.querySelector("#nightLabel");
   const powerLabel = document.querySelector("#powerLabel");
-  const powerFill = /** @type {HTMLElement} */ (document.querySelector("#powerFill"));
+
+  const powerFill = /** @type {HTMLElement} */ (
+    document.querySelector("#powerFill")
+  );
+
   const usageBars = [...document.querySelectorAll("#usageBars i")];
   const cameraCode = document.querySelector("#cameraCode");
   const cameraName = document.querySelector("#cameraName");
@@ -60,6 +84,7 @@
   const cameraSystem = window.NeegyCameras.create();
 
   const NIGHT_SECONDS = 360;
+
   const POWER_RATES = {
     clock: 1,
     cameras: 2.5,
@@ -94,7 +119,17 @@
       color: 0x60ff8a,
       behavior: "wanderer",
       start: "1a",
-      route: ["1a", "2d", "1d", "1c", "1d", "1e", "3d", "1e", "3e"],
+      route: [
+        "1a",
+        "2d",
+        "1d",
+        "1c",
+        "1d",
+        "1e",
+        "3d",
+        "1e",
+        "3e"
+      ],
       side: "left",
       interval: 7.4,
       backtrack: 0.18,
@@ -107,7 +142,17 @@
       color: 0xff6fb7,
       behavior: "lurker",
       start: "1a",
-      route: ["1a", "2d", "1d", "2b", "1d", "2e", "2a", "2e", "4e"],
+      route: [
+        "1a",
+        "2d",
+        "1d",
+        "2b",
+        "1d",
+        "2e",
+        "2a",
+        "2e",
+        "4e"
+      ],
       side: "right",
       interval: 8.1,
       backtrack: 0.24,
@@ -120,7 +165,17 @@
       color: 0xff8b38,
       behavior: "stalker",
       start: "1a",
-      route: ["1a", "2d", "1d", "2c", "1d", "2e", "3a", "2e", "4e"],
+      route: [
+        "1a",
+        "2d",
+        "1d",
+        "2c",
+        "1d",
+        "2e",
+        "3a",
+        "2e",
+        "4e"
+      ],
       side: "right",
       interval: 6.2,
       backtrack: 0,
@@ -146,7 +201,15 @@
       color: 0xc79bff,
       behavior: "corruptor",
       start: "1a",
-      route: ["1a", "2d", "1d", "2e", "3b", "2e", "4e"],
+      route: [
+        "1a",
+        "2d",
+        "1d",
+        "2e",
+        "3b",
+        "2e",
+        "4e"
+      ],
       side: "right",
       interval: 8.8,
       backtrack: 0.12,
@@ -249,7 +312,7 @@
     scene.fog = new THREE.FogExp2(0x020302, 0.028);
 
     const camera = new THREE.PerspectiveCamera(68, 16 / 9, 0.1, 80);
-    camera.position.set(0, 3.05, 8.25);
+    camera.position.set(0, 2.72, 7.35);
 
     const paintedWall = repeatedTexture(
       256,
@@ -318,6 +381,7 @@
 
         ctx.strokeStyle = "rgba(10,12,10,.35)";
         ctx.lineWidth = 3;
+
         ctx.strokeRect(
           1.5,
           1.5,
@@ -341,6 +405,7 @@
 
           ctx.beginPath();
           ctx.moveTo(0, y);
+
           ctx.bezierCurveTo(
             62,
             y - 7,
@@ -349,6 +414,7 @@
             image.width,
             y - 2
           );
+
           ctx.stroke();
         }
       }
@@ -359,55 +425,87 @@
         map: paintedWall,
         roughness: 0.98
       }),
+
       lowerWall: material(0x26352d, {
         map: paintedWall,
         roughness: 0.9
       }),
+
       floor: material(0xffffff, {
         map: concreteFloor,
         roughness: 0.94
       }),
+
       ceiling: material(0x696d68, {
         map: paintedWall,
         roughness: 0.97
       }),
+
       wood: material(0x8a5837, {
         map: woodGrain,
         roughness: 0.58
       }),
+
       woodTop: material(0xa06c43, {
         map: woodGrain,
         roughness: 0.38
       }),
+
       dark: material(0x090c0a, {
         roughness: 0.68
       }),
+
       black: material(0x020303, {
         roughness: 0.8
       }),
+
       steel: material(0x71797a, {
         metalness: 0.84,
         roughness: 0.22
       }),
+
       chrome: material(0xbec7c8, {
         metalness: 0.95,
         roughness: 0.1
       }),
+
       silver: material(0xd0d6d8, {
         metalness: 0.94,
         roughness: 0.2
       }),
+
       paper: material(0xd9d8ca, {
         roughness: 0.78
       }),
+
       red: material(0x6d1713, {
         emissive: 0x350300,
         emissiveIntensity: 0.4
       }),
+
+      cork: material(0x8a755b, {
+        roughness: 0.98
+      }),
+
+      rubber: material(0x241d19, {
+        roughness: 0.86
+      }),
+
+      bottle: material(0x285477, {
+        transparent: true,
+        opacity: 0.78,
+        roughness: 0.22
+      }),
+
+      yellow: material(0xe1b84a, {
+        roughness: 0.72
+      }),
+
       screen: material(0x06100a, {
         emissive: 0x42f57b,
         emissiveIntensity: 1.7
       }),
+
       clock: material(0x070908, {
         emissive: 0xff372f,
         emissiveIntensity: 1.8
@@ -453,12 +551,7 @@
       segments = 24
     ) {
       const mesh = new THREE.Mesh(
-        new THREE.CylinderGeometry(
-          radius,
-          radius,
-          depth,
-          segments
-        ),
+        new THREE.CylinderGeometry(radius, radius, depth, segments),
         mat
       );
 
@@ -473,14 +566,7 @@
       return mesh;
     }
 
-    function sphere(
-      x,
-      y,
-      z,
-      radius,
-      mat,
-      parent = scene
-    ) {
+    function sphere(x, y, z, radius, mat, parent = scene) {
       const mesh = new THREE.Mesh(
         new THREE.SphereGeometry(radius, 18, 12),
         mat
@@ -563,6 +649,116 @@
       ).texture;
     }
 
+    function posterTexture(
+      title,
+      subtitle,
+      background,
+      ink = "#171713"
+    ) {
+      return canvasTexture(
+        512,
+        640,
+        (ctx, image) => {
+          ctx.fillStyle = background;
+          ctx.fillRect(0, 0, image.width, image.height);
+
+          for (let grain = 0; grain < 1800; grain++) {
+            ctx.fillStyle = Math.random() > 0.5
+              ? "rgba(255,255,255,.035)"
+              : "rgba(0,0,0,.04)";
+
+            ctx.fillRect(
+              Math.random() * image.width,
+              Math.random() * image.height,
+              2,
+              2
+            );
+          }
+
+          ctx.fillStyle = ink;
+          ctx.textAlign = "center";
+          ctx.font = "900 62px Arial";
+          ctx.fillText(title, image.width / 2, 105);
+
+          ctx.font = "700 29px Arial";
+
+          const words = subtitle.split(" ");
+          let line = "";
+          let y = 166;
+
+          for (const word of words) {
+            const test = `${line}${word} `;
+
+            if (ctx.measureText(test).width > 420) {
+              ctx.fillText(line.trim(), image.width / 2, y);
+              line = `${word} `;
+              y += 38;
+            } else {
+              line = test;
+            }
+          }
+
+          ctx.fillText(line.trim(), image.width / 2, y);
+
+          ctx.strokeStyle = ink;
+          ctx.lineWidth = 15;
+
+          ctx.strokeRect(
+            42,
+            42,
+            image.width - 84,
+            image.height - 84
+          );
+
+          ctx.beginPath();
+          ctx.arc(256, 410, 94, 0, Math.PI * 2);
+          ctx.stroke();
+
+          ctx.beginPath();
+          ctx.moveTo(205, 410);
+          ctx.lineTo(245, 455);
+          ctx.lineTo(323, 355);
+          ctx.stroke();
+        }
+      ).texture;
+    }
+
+    function wallPoster(
+      title,
+      subtitle,
+      x,
+      y,
+      width,
+      height,
+      background,
+      ink = "#171713",
+      rotationY = 0,
+      z = -5.06
+    ) {
+      const poster = texturedPlane(
+        x,
+        y,
+        z,
+        width,
+        height,
+        posterTexture(
+          title,
+          subtitle,
+          background,
+          ink
+        ),
+        rotationY
+      );
+
+      poster.rotation.z =
+        THREE.MathUtils.randFloat(
+          -0.035,
+          0.035
+        );
+
+      return poster;
+    }
+
     const deskFeedTarget = new THREE.WebGLRenderTarget(
       512,
       288,
@@ -588,7 +784,6 @@
 
       group.position.set(x, y, z);
       group.rotation.y = rotationY;
-
       scene.add(group);
 
       box(
@@ -730,7 +925,7 @@
     function createDoor(side, x) {
       const shutter = new THREE.Group();
 
-      shutter.position.set(x, 5.4, -3.2);
+      shutter.position.set(x, 5.4, -1.1);
       scene.add(shutter);
 
       for (let panel = 0; panel < 10; panel++) {
@@ -762,7 +957,7 @@
       box(
         x,
         5.2,
-        -3.2,
+        -1.1,
         0.7,
         0.55,
         4.9,
@@ -772,7 +967,7 @@
       box(
         x,
         2.45,
-        -5.48,
+        -3.32,
         0.65,
         4.9,
         0.42,
@@ -782,7 +977,7 @@
       box(
         x,
         2.45,
-        -0.92,
+        1.12,
         0.65,
         4.9,
         0.42,
@@ -792,7 +987,7 @@
       box(
         x + (side === "left" ? 0.38 : -0.38),
         2.2,
-        -0.45,
+        1.3,
         0.2,
         1.1,
         0.65,
@@ -807,218 +1002,403 @@
 
     box(
       0,
-      -0.15,
-      -1,
-      18,
-      0.3,
-      19,
+      -0.12,
+      0.6,
+      14.6,
+      0.24,
+      13.2,
       mats.floor
     );
 
     box(
       0,
-      6,
-      -1,
-      18,
-      0.25,
-      19,
+      5.75,
+      0.6,
+      14.6,
+      0.22,
+      13.2,
       mats.ceiling
     );
 
     box(
       0,
-      3,
-      -9.3,
-      18,
-      6,
-      0.35,
-      mats.wall
+      2.88,
+      -5.3,
+      14.6,
+      5.75,
+      0.28,
+      mats.cork
     );
 
     box(
-      -8.8,
-      3,
-      -7.2,
-      0.35,
-      6,
-      4.2,
-      mats.wall
+      -7.15,
+      2.88,
+      -3.95,
+      0.28,
+      5.75,
+      2.7,
+      mats.cork
     );
 
     box(
-      -8.8,
-      3,
-      1.6,
-      0.35,
-      6,
+      -7.15,
+      2.88,
+      3.35,
+      0.28,
+      5.75,
       4.1,
       mats.wall
     );
 
     box(
-      8.8,
-      3,
-      -7.2,
-      0.35,
-      6,
-      4.2,
-      mats.wall
+      7.15,
+      2.88,
+      -3.95,
+      0.28,
+      5.75,
+      2.7,
+      mats.cork
     );
 
     box(
-      8.8,
-      3,
-      1.6,
-      0.35,
-      6,
+      7.15,
+      2.88,
+      3.35,
+      0.28,
+      5.75,
       4.1,
       mats.wall
     );
 
     box(
-      0,
-      1.15,
-      -9.08,
-      17.5,
-      2.3,
-      0.08,
-      mats.lowerWall
-    );
-
-    box(
-      -10.8,
-      0,
-      -3.2,
-      4,
-      0.12,
-      4.7,
+      -9.2,
+      -0.03,
+      -1.1,
+      4.2,
+      0.1,
+      4.25,
       mats.black
     );
 
     box(
-      10.8,
-      0,
-      -3.2,
-      4,
-      0.12,
-      4.7,
-      mats.black
-    );
-
-    box(
-      -11.8,
-      3,
-      -3.2,
-      0.2,
-      6,
-      4.7,
-      mats.black
-    );
-
-    box(
-      11.8,
-      3,
-      -3.2,
-      0.2,
-      6,
-      4.7,
-      mats.black
-    );
-
-    box(
-      0,
-      1.05,
-      2.2,
       9.2,
-      1.8,
-      2.35,
+      -0.03,
+      -1.1,
+      4.2,
+      0.1,
+      4.25,
+      mats.black
+    );
+
+    box(
+      -9.8,
+      2.8,
+      -1.1,
+      0.2,
+      5.6,
+      4.25,
+      mats.black
+    );
+
+    box(
+      9.8,
+      2.8,
+      -1.1,
+      0.2,
+      5.6,
+      4.25,
+      mats.black
+    );
+
+    box(
+      -7.12,
+      2.85,
+      -3.1,
+      0.42,
+      5.7,
+      0.35,
       mats.wood
     );
 
     box(
-      0,
-      2,
+      -7.12,
+      2.85,
+      0.9,
+      0.42,
+      5.7,
+      0.35,
+      mats.wood
+    );
+
+    box(
+      7.12,
+      2.85,
+      -3.1,
+      0.42,
+      5.7,
+      0.35,
+      mats.wood
+    );
+
+    box(
+      7.12,
+      2.85,
+      0.9,
+      0.42,
+      5.7,
+      0.35,
+      mats.wood
+    );
+
+    box(
+      -6.96,
+      2.85,
+      -0.96,
+      0.12,
+      5.35,
+      3.55,
+      mats.steel
+    );
+
+    box(
+      6.96,
+      2.85,
+      -0.96,
+      0.12,
+      5.35,
+      3.55,
+      mats.steel
+    );
+
+    wallPoster(
+      "BANK NOTICE",
+      "AUTHORIZED STAFF ONLY",
+      -6.88,
+      3.5,
+      1.5,
+      2.05,
+      "#abb0ad",
+      "#252a27",
+      Math.PI / 2,
+      -0.95
+    );
+
+    wallPoster(
+      "STAY ALERT",
+      "REPORT ALL ACTIVITY",
+      6.88,
+      3.5,
+      1.5,
+      2.05,
+      "#abb0ad",
+      "#252a27",
+      -Math.PI / 2,
+      -0.95
+    );
+
+    wallPoster(
+      "NNB",
+      "YOUR MONEY IS SAFE",
+      -4.85,
+      4.15,
+      1.1,
+      1.4,
+      "#d9d5c4"
+    );
+
+    wallPoster(
+      "ALERT",
+      "WATCH EVERY HALL",
+      -3.45,
+      3.5,
+      1.15,
+      1.65,
+      "#812d27",
+      "#f2dfbd"
+    );
+
+    wallPoster(
+      "SAVE",
+      "TODAY FOR TOMORROW",
+      -2.05,
+      4.35,
+      1.05,
+      1.25,
+      "#d7d2ba"
+    );
+
+    wallPoster(
+      "CITY",
+      "WHY THE VAULT HUMS",
+      0.15,
+      4.15,
+      2.1,
+      1.42,
+      "#c9c2a9"
+    );
+
+    wallPoster(
+      "SECURITY",
+      "SEE SOMETHING SAY SOMETHING",
+      2.25,
+      3.6,
+      1.15,
+      1.6,
+      "#263b31",
+      "#e8eadb"
+    );
+
+    wallPoster(
+      "SHIFT",
+      "CHECK EVERY CAMERA",
+      3.75,
+      4.25,
+      1.05,
+      1.25,
+      "#d5cdb4"
+    );
+
+    wallPoster(
+      "NEEGY",
+      "NATIONAL BANK",
+      5.05,
+      3.65,
+      1.15,
+      1.55,
+      "#354936",
+      "#ece4c7"
+    );
+
+    wallPoster(
+      "LOG",
+      "SIGN EVERY HOUR",
+      -4.7,
+      2.45,
+      0.9,
+      1.05,
+      "#d8d3c2"
+    );
+
+    wallPoster(
+      "CAM",
+      "NO BLIND SPOTS",
+      -3.2,
+      2.25,
+      1.15,
+      1.05,
+      "#252a27",
+      "#d8e5d8"
+    );
+
+    wallPoster(
+      "ROUTES",
+      "LEFT AND RIGHT",
+      -1.55,
+      2.55,
+      1.05,
+      1.25,
+      "#d5d0bc"
+    );
+
+    wallPoster(
+      "6 AM",
+      "KEEP THE DOORS READY",
+      0.05,
       2.2,
-      9.35,
-      0.14,
+      1.1,
+      1.05,
+      "#29362e",
+      "#e4eadc"
+    );
+
+    wallPoster(
+      "POWER",
+      "USE ONLY WHAT YOU NEED",
+      1.7,
+      2.55,
+      1.05,
+      1.25,
+      "#d8d1b8"
+    );
+
+    wallPoster(
+      "VAULT",
+      "COUNT TWICE",
+      3.15,
+      2.25,
+      1.05,
+      1.05,
+      "#2d332f",
+      "#e5ddc6"
+    );
+
+    wallPoster(
+      "NIGHT",
+      "STAY UNTIL SIX",
+      4.7,
       2.5,
+      1,
+      1.2,
+      "#d8d1bc"
+    );
+
+    box(
+      0,
+      1.58,
+      -3.45,
+      10.9,
+      0.18,
+      1.68,
       mats.woodTop
     );
 
     box(
-      -3.65,
-      0.65,
-      2.22,
-      1.3,
-      1.25,
-      1.9,
-      mats.wood
-    );
-
-    box(
-      3.65,
-      0.65,
-      2.22,
-      1.3,
-      1.25,
-      1.9,
-      mats.wood
-    );
-
-    deskMonitor(
-      -2.25,
-      3.02,
-      1.45,
-      1,
-      0.08
-    );
-
-    deskMonitor(
-      0,
-      3.15,
-      1.28,
-      2,
-      0,
-      deskFeedTarget.texture
-    );
-
-    deskMonitor(
-      2.25,
-      3.02,
-      1.45,
-      3,
-      -0.08
-    );
-
-    box(
-      0,
-      2.13,
-      3.08,
-      2.15,
+      -5.05,
+      0.75,
+      -3.45,
       0.12,
-      0.72,
-      mats.dark
+      1.5,
+      1.35,
+      mats.steel
     );
 
-    for (let keyRow = 0; keyRow < 4; keyRow++) {
-      for (let key = 0; key < 10; key++) {
-        box(
-          -0.85 + key * 0.19,
-          2.205,
-          2.82 + keyRow * 0.14,
-          0.13,
-          0.025,
-          0.08,
-          mats.chrome
-        );
-      }
-    }
+    box(
+      5.05,
+      0.75,
+      -3.45,
+      0.12,
+      1.5,
+      1.35,
+      mats.steel
+    );
 
     box(
-      -3.3,
-      2.12,
-      2.7,
-      1.45,
+      -4.78,
+      0.75,
+      -3.45,
+      0.06,
+      1.5,
+      1.28,
+      mats.chrome,
+      -0.18
+    );
+
+    box(
+      4.78,
+      0.75,
+      -3.45,
+      0.06,
+      1.5,
+      1.28,
+      mats.chrome,
+      0.18
+    );
+
+    box(
+      -4.1,
+      1.72,
+      -3.25,
+      1.55,
       0.035,
       0.95,
       mats.paper,
@@ -1026,49 +1406,200 @@
     );
 
     box(
-      -3.1,
-      2.17,
-      2.82,
-      1.35,
+      -3.82,
+      1.77,
+      -3.15,
+      1.45,
       0.035,
-      0.85,
+      0.84,
       mats.paper,
-      0.06
+      0.055
     );
 
     box(
-      3.4,
-      2.2,
-      2.7,
-      0.62,
-      0.2,
-      1.08,
+      -2.65,
+      1.82,
+      -3.58,
+      1.18,
+      0.26,
+      0.58,
       mats.dark,
-      -0.15
+      -0.08
     );
 
     box(
-      3.4,
-      2.32,
-      2.52,
-      0.45,
+      -2.65,
+      1.99,
+      -3.6,
+      0.78,
       0.08,
-      0.55,
-      mats.red,
-      -0.15
+      0.4,
+      mats.rubber,
+      -0.08
     );
 
     cylinder(
-      2.8,
-      2.43,
-      3.25,
-      0.32,
-      0.62,
-      mats.paper,
+      -1.3,
+      1.88,
+      -3.28,
+      0.16,
+      0.9,
+      mats.dark,
+      0,
+      Math.PI / 2,
+      scene,
+      16
+    );
+
+    sphere(
+      -0.25,
+      1.82,
+      -3.3,
+      0.22,
+      mats.red
+    );
+
+    cylinder(
+      0.65,
+      1.84,
+      -3.3,
+      0.13,
+      0.78,
+      mats.red,
+      0,
+      Math.PI / 2,
+      scene,
+      16
+    );
+
+    cylinder(
+      1.65,
+      1.91,
+      -3.55,
+      0.15,
+      0.72,
+      mats.dark,
+      Math.PI / 2,
+      0,
+      scene,
+      16
+    );
+
+    sphere(
+      2.55,
+      1.86,
+      -3.45,
+      0.22,
+      mats.paper
+    );
+
+    sphere(
+      3.1,
+      1.86,
+      -3.42,
+      0.22,
+      mats.paper
+    );
+
+    cylinder(
+      4.15,
+      2.02,
+      -3.52,
+      0.19,
+      0.78,
+      mats.bottle,
       0,
       0,
       scene,
-      20
+      18
+    );
+
+    cylinder(
+      4.15,
+      2.45,
+      -3.52,
+      0.11,
+      0.14,
+      mats.blue,
+      0,
+      0,
+      scene,
+      14
+    );
+
+    sphere(
+      4.72,
+      1.84,
+      -3.22,
+      0.25,
+      mats.red
+    );
+
+    const banana = new THREE.Mesh(
+      new THREE.TorusGeometry(
+        0.42,
+        0.095,
+        10,
+        28,
+        Math.PI * 1.25
+      ),
+      mats.yellow
+    );
+
+    banana.position.set(
+      4.3,
+      1.88,
+      -2.9
+    );
+
+    banana.rotation.set(
+      Math.PI / 2,
+      0.1,
+      -0.45
+    );
+
+    banana.castShadow = true;
+    scene.add(banana);
+
+    deskMonitor(
+      3.2,
+      2.37,
+      -4.08,
+      2,
+      -0.04,
+      deskFeedTarget.texture
+    );
+
+    cylinder(
+      -5.65,
+      0.48,
+      -3.65,
+      0.42,
+      0.9,
+      mats.dark,
+      0,
+      0,
+      scene,
+      12
+    );
+
+    sphere(
+      -1.55,
+      0.16,
+      -1.25,
+      0.17,
+      mats.red
+    );
+
+    box(
+      1.4,
+      0.07,
+      -0.75,
+      1.35,
+      0.035,
+      0.48,
+      mats.paper,
+      0.18
     );
 
     const bankLogo = canvasTexture(
@@ -1080,6 +1611,7 @@
 
         ctx.fillStyle = "#d3b657";
         ctx.beginPath();
+
         ctx.arc(
           256,
           205,
@@ -1087,6 +1619,7 @@
           0,
           Math.PI * 2
         );
+
         ctx.fill();
 
         ctx.fillStyle = "#123a24";
@@ -1096,6 +1629,7 @@
 
         ctx.fillStyle = "#f4e8b0";
         ctx.font = "bold 38px Arial";
+
         ctx.fillText(
           "NEEGY NATIONAL",
           256,
@@ -1108,24 +1642,22 @@
     ).texture;
 
     box(
-      -4.1,
-      3.05,
-      1.45,
-      1.75,
-      1.7,
-      0.16,
-      mats.wood,
-      0.1
+      -5.65,
+      2.05,
+      -5.08,
+      1.15,
+      1.25,
+      0.12,
+      mats.wood
     );
 
     texturedPlane(
-      -4.1,
-      3.05,
-      1.355,
-      1.48,
-      1.43,
-      bankLogo,
-      Math.PI + 0.1
+      -5.65,
+      2.05,
+      -5,
+      0.96,
+      1.04,
+      bankLogo
     );
 
     const clockSurface = canvasTexture(
@@ -1133,6 +1665,7 @@
       190,
       (ctx, image) => {
         ctx.fillStyle = "#050505";
+
         ctx.fillRect(
           0,
           0,
@@ -1148,26 +1681,32 @@
     );
 
     box(
-      0,
-      4.65,
-      -9.03,
-      3.25,
-      1.3,
-      0.22,
+      5.45,
+      4.82,
+      -5.08,
+      1.55,
+      0.62,
+      0.14,
       mats.dark
     );
 
     texturedPlane(
-      0,
-      4.65,
-      -8.905,
-      2.9,
-      1.05,
+      5.45,
+      4.82,
+      -4.99,
+      1.34,
+      0.46,
       clockSurface.texture
     );
 
     const fan = new THREE.Group();
-    fan.position.set(4.15, 2.2, 1.35);
+
+    fan.position.set(
+      -4.65,
+      1.72,
+      -3.75
+    );
+
     scene.add(fan);
 
     cylinder(
@@ -1227,50 +1766,58 @@
     );
 
     box(
-      4.15,
-      2.1,
-      1.38,
-      1.25,
-      0.08,
-      0.75,
+      -4.65,
+      1.76,
+      -3.74,
+      1.05,
+      0.06,
+      0.62,
       mats.dark
     );
 
     box(
       0,
-      5.82,
-      -2.5,
-      4.5,
-      0.08,
-      0.72,
-      material(0xffffff, {
-        emissive: 0xffffff,
-        emissiveIntensity: 3.3
+      5.58,
+      -2.05,
+      3.2,
+      0.07,
+      0.56,
+      material(0xfff4dc, {
+        emissive: 0xffeed0,
+        emissiveIntensity: 2.3
       })
     );
 
     const officeAmbient =
       new THREE.HemisphereLight(
-        0xe4f2e8,
-        0x0a140d,
-        1.32
+        0xd8c8aa,
+        0x090807,
+        0.78
       );
 
     scene.add(officeAmbient);
 
     const officeLight = new THREE.PointLight(
-      0xe9fff0,
-      56,
-      24
+      0xffe5bd,
+      38,
+      18
     );
 
-    officeLight.position.set(0, 5.35, -1.5);
+    officeLight.position.set(
+      0,
+      5.1,
+      -2.2
+    );
+
     officeLight.castShadow = true;
+
     officeLight.shadow.mapSize.set(
       2048,
       2048
     );
-    officeLight.shadow.bias = -0.0008;
+
+    officeLight.shadow.bias =
+      -0.0008;
 
     scene.add(officeLight);
 
@@ -1373,21 +1920,21 @@
 
     const leftDoor = createDoor(
       "left",
-      -8.45
+      -7.45
     );
 
     const rightDoor = createDoor(
       "right",
-      8.45
+      7.45
     );
 
     const leftFigure =
       officeStickFigure(0x101310);
 
     leftFigure.position.set(
-      -9.4,
+      -8.2,
       0,
-      -3.2
+      -1.1
     );
 
     leftFigure.rotation.y =
@@ -1397,18 +1944,20 @@
       officeStickFigure(0x101310);
 
     rightFigure.position.set(
-      9.4,
+      8.2,
       0,
-      -3.2
+      -1.1
     );
 
     rightFigure.rotation.y =
       -Math.PI / 2;
 
     function setClock(text) {
-      const ctx = clockSurface.context;
+      const ctx =
+        clockSurface.context;
 
       ctx.fillStyle = "#050505";
+
       ctx.fillRect(
         0,
         0,
@@ -1426,7 +1975,8 @@
         135
       );
 
-      clockSurface.texture.needsUpdate = true;
+      clockSurface.texture.needsUpdate =
+        true;
     }
 
     function update(delta, elapsed) {
@@ -1440,13 +1990,15 @@
         (
           leftClosedY -
           leftDoor.shutter.position.y
-        ) * Math.min(1, delta * 9);
+        ) *
+        Math.min(1, delta * 9);
 
       rightDoor.shutter.position.y +=
         (
           rightClosedY -
           rightDoor.shutter.position.y
-        ) * Math.min(1, delta * 9);
+        ) *
+        Math.min(1, delta * 9);
 
       leftLight.intensity +=
         (
@@ -1457,7 +2009,8 @@
               : 0
           ) -
           leftLight.intensity
-        ) * Math.min(1, delta * 13);
+        ) *
+        Math.min(1, delta * 13);
 
       rightLight.intensity +=
         (
@@ -1468,26 +2021,28 @@
               : 0
           ) -
           rightLight.intensity
-        ) * Math.min(1, delta * 13);
+        ) *
+        Math.min(1, delta * 13);
 
       officeAmbient.intensity +=
         (
           (
             state.powerOut
               ? 0.03
-              : 1.32
+              : 0.78
           ) -
           officeAmbient.intensity
-        ) * Math.min(1, delta * 2.4);
+        ) *
+        Math.min(1, delta * 2.4);
 
       const fluorescentFlicker =
-        56 *
+        38 *
         (
           1 +
           Math.sin(elapsed * 8.1) *
-            0.008 +
+            0.012 +
           Math.sin(elapsed * 27.4) *
-            0.006
+            0.009
         );
 
       officeLight.intensity +=
@@ -1498,7 +2053,8 @@
               : fluorescentFlicker
           ) -
           officeLight.intensity
-        ) * Math.min(1, delta * 2.4);
+        ) *
+        Math.min(1, delta * 2.4);
 
       blades.rotation.z -= delta * 8;
 
@@ -1510,17 +2066,19 @@
         Math.sin(elapsed * 0.19) *
         0.025;
 
-      const leftThreat = enemies.find(
-        enemy =>
-          enemy.camera === "3e" &&
-          !enemy.insideOffice
-      );
+      const leftThreat =
+        enemies.find(
+          enemy =>
+            enemy.camera === "3e" &&
+            !enemy.insideOffice
+        );
 
-      const rightThreat = enemies.find(
-        enemy =>
-          enemy.camera === "4e" &&
-          !enemy.insideOffice
-      );
+      const rightThreat =
+        enemies.find(
+          enemy =>
+            enemy.camera === "4e" &&
+            !enemy.insideOffice
+        );
 
       leftFigure.visible = Boolean(
         leftThreat &&
@@ -1558,27 +2116,28 @@
         (
           state.panTarget -
           state.pan
-        ) * Math.min(1, delta * 3.2);
+        ) *
+        Math.min(1, delta * 3.2);
 
       camera.position.x =
         state.pan * 1.05;
 
       camera.position.y =
-        3.05 +
+        2.72 +
         Math.sin(elapsed * 0.55) *
           0.008;
 
       camera.position.z =
-        8.25 +
+        7.35 +
         Math.sin(elapsed * 0.31) *
           0.012;
 
       camera.lookAt(
-        state.pan * 4.1,
-        2.35 +
+        state.pan * 3.65,
+        2.25 +
           Math.sin(elapsed * 0.4) *
             0.006,
-        -2.65
+        -2.7
       );
     }
 
@@ -1711,13 +2270,15 @@
         camera: config.start,
         previousCamera: config.start,
         routeIndex: 0,
+
         nextMove:
           now +
           (
             config.interval +
             Math.random() * 4
           ) *
-            1000,
+          1000,
+
         moveStartedAt: 0,
         moveDuration: 1,
         insideOffice: false,
@@ -1800,7 +2361,7 @@
         4 +
         Math.random() * 3
       ) *
-        1000;
+      1000;
 
     tone(
       75,
@@ -1836,7 +2397,7 @@
         enemy.interval +
         Math.random() * 4.5
       ) *
-        1000;
+      1000;
 
     if (level <= 0) return;
 
@@ -1974,7 +2535,8 @@
           state.selectedCamera === "2f";
 
         const pressureRate =
-          0.01 + level * 0.00235;
+          0.01 +
+          level * 0.00235;
 
         enemy.pressure =
           THREE.MathUtils.clamp(
@@ -2361,7 +2923,7 @@
           state.elapsed /
           NIGHT_SECONDS
         ) *
-          6
+        6
       )
     );
   }
@@ -2588,7 +3150,7 @@
       0,
       state.power -
         (perMinute / 60) *
-          delta
+        delta
     );
   }
 
@@ -2639,9 +3201,11 @@
     setMonitor(false, true);
 
     hud.classList.add("hidden");
+
     officeControls.classList.add(
       "hidden"
     );
+
     monitorButton.classList.add(
       "hidden"
     );
@@ -2693,9 +3257,11 @@
     setMonitor(false, true);
 
     hud.classList.add("hidden");
+
     officeControls.classList.add(
       "hidden"
     );
+
     monitorButton.classList.add(
       "hidden"
     );
@@ -2806,6 +3372,7 @@
         camera: enemy.camera,
         previousCamera:
           enemy.previousCamera,
+
         moveProgress:
           enemy.moveStartedAt
             ? THREE.MathUtils.clamp(
@@ -2818,6 +3385,7 @@
                 1
               )
             : 1,
+
         color: enemy.color,
         insideOffice:
           enemy.insideOffice
@@ -2875,6 +3443,7 @@
         );
 
       button.type = "button";
+
       button.className =
         "camera-map-button";
 
@@ -3309,8 +3878,7 @@
     () => {
       renderer.setPixelRatio(
         Math.min(
-          window.devicePixelRatio ||
-            1,
+          window.devicePixelRatio || 1,
           1.35
         )
       );
@@ -3343,6 +3911,7 @@
         enemy => ({ ...enemy })
       )
     }),
+
     showCamera: selectCamera,
     setMonitor,
     toggleDoor,
