@@ -1,5 +1,6 @@
 export type DoorSide = "left" | "right";
 export type ScreenName = "title" | "intro" | "playing" | "won" | "lost";
+export type EnemyBehavior = "wanderer" | "lurker" | "stalker" | "runner" | "corruptor";
 export type CameraId =
   | "1a" | "1b" | "1c" | "1d"
   | "2a" | "2b" | "2c" | "2d" | "2e" | "2f"
@@ -18,28 +19,28 @@ export interface EnemyConfig {
   id: string;
   name: string;
   color: number;
+  behavior: EnemyBehavior;
   start: CameraId;
   route: CameraId[];
   side: DoorSide;
   interval: number;
   backtrack: number;
+  grace: number;
   ai: number[];
 }
 
 export interface RuntimeEnemy extends EnemyConfig {
   camera: CameraId;
+  previousCamera: CameraId;
   routeIndex: number;
   nextMove: number;
+  moveStartedAt: number;
+  moveDuration: number;
   insideOffice: boolean;
+  breaching: boolean;
+  breachAt: number;
   attackAt: number;
-}
-
-export interface NeegyGameAPI {
-  getState(): GameStateSnapshot;
-  showCamera(id: CameraId): void;
-  setMonitor(open: boolean): void;
-  toggleDoor(side: DoorSide): void;
-  startNight(night?: number): void;
+  pressure: number;
 }
 
 export interface GameStateSnapshot {
@@ -57,6 +58,23 @@ export interface GameStateSnapshot {
   [key: string]: unknown;
 }
 
+export interface NeegyGameAPI {
+  getState(): GameStateSnapshot;
+  showCamera(id: CameraId): void;
+  setMonitor(open: boolean): void;
+  toggleDoor(side: DoorSide): void;
+  startNight(night?: number): void;
+}
+
+export interface CameraEnemyView {
+  id: string;
+  camera: CameraId;
+  previousCamera?: CameraId;
+  moveProgress?: number;
+  color: number;
+  insideOffice?: boolean;
+}
+
 export interface NeegyCameraAPI {
   definitions: CameraDefinition[];
   create(): {
@@ -64,8 +82,9 @@ export interface NeegyCameraAPI {
     camera: unknown;
     cameras: CameraDefinition[];
     show(id: CameraId): boolean;
-    update(delta: number, elapsed: number, enemies: Array<Pick<RuntimeEnemy, "id" | "camera" | "color" | "insideOffice">>): void;
+    update(delta: number, elapsed: number, enemies: CameraEnemyView[]): void;
     setDoorState(side: DoorSide, closed: boolean): void;
+    getDoorState(side: DoorSide): boolean;
     getCurrent(): CameraDefinition;
   };
 }
