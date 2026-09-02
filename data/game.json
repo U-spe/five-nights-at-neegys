@@ -2,7 +2,7 @@
     "title": "5 Nights at Neegys",
     "location": "Neegy National Bank",
 
-    "nightLengthSeconds": 360,
+    "nightLengthSeconds": 600,
 
     "hourLabels": [
         "12 AM",
@@ -18,7 +18,19 @@
         "clock": 1,
         "cameras": 2.5,
         "lights": 2,
-        "doors": 4
+        "doors": 5
+    },
+
+    "movementSystem": {
+        "aiRollSides": 20,
+        "usesWalkTransitions": true,
+        "usesReservedRoomSlots": true,
+        "farmerStartCamera": "2f",
+        "sharedSafeStartCamera": "1a",
+        "doorCameras": {
+            "left": "3e",
+            "right": "4e"
+        }
     },
 
     "hourBoosts": [
