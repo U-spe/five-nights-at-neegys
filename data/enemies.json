@@ -1,160 +1,62 @@
 [
-    {
-        "id": "regular",
-        "name": "Regular Neegy",
-        "behavior": "wanderer",
-
-        "startCamera": "1a",
-
-        "route": [
-            "1a",
-            "1d",
-            "2d",
-            "1e",
-            "3e"
-        ],
-
-        "attackSide": "left",
-
-        "movementInterval": 4.9,
-        "backtrackChance": 0.2,
-        "doorGraceSeconds": 6,
-
-        "aiByNight": [
-            3,
-            5,
-            7,
-            10,
-            12,
-            15,
-            20
-        ]
-    },
-
-    {
-        "id": "girl",
-        "name": "Girl Neegy",
-        "behavior": "wanderer",
-
-        "startCamera": "1a",
-
-        "route": [
-            "1a",
-            "1b",
-            "3a",
-            "2e",
-            "4e"
-        ],
-
-        "attackSide": "right",
-
-        "movementInterval": 5,
-        "backtrackChance": 0.3,
-        "doorGraceSeconds": 7,
-
-        "aiByNight": [
-            1,
-            3,
-            5,
-            8,
-            11,
-            14,
-            20
-        ]
-    },
-
-    {
-        "id": "rapper",
-        "name": "Rapper Neegy",
-        "behavior": "stalker",
-
-        "startCamera": "1a",
-
-        "route": [
-            "1a",
-            "1c",
-            "1d",
-            "2d",
-            "2e",
-            "4e"
-        ],
-
-        "attackSide": "right",
-
-        "movementInterval": 3.1,
-        "backtrackChance": 0,
-        "doorGraceSeconds": 0,
-
-        "aiByNight": [
-            0,
-            0,
-            2,
-            4,
-            7,
-            10,
-            20
-        ]
-    },
-
-    {
-        "id": "farmer",
-        "name": "Farmer Neegy",
-        "behavior": "runner",
-
-        "startCamera": "2f",
-
-        "route": [
-            "2f",
-            "1e",
-            "3e"
-        ],
-
-        "attackSide": "left",
-
-        "movementInterval": 5.1,
-        "backtrackChance": 0,
-        "doorGraceSeconds": 0,
-
-        "aiByNight": [
-            1,
-            2,
-            4,
-            6,
-            9,
-            12,
-            20
-        ]
-    },
-
-    {
-        "id": "banana",
-        "name": "Banana Neegy",
-        "behavior": "corruptor",
-
-        "startCamera": "3b",
-
-        "route": [
-            "3b",
-            "3d",
-            "2d",
-            "2e",
-            "4e"
-        ],
-
-        "attackSide": "right",
-
-        "movementInterval": 5.4,
-        "backtrackChance": 0.15,
-        "doorGraceSeconds": 5,
-
-        "aiByNight": [
-            0,
-            0,
-            0,
-            3,
-            6,
-            10,
-            20
-        ]
-    }
+  {
+    "id": "regular",
+    "name": "Regular Neegy",
+    "behavior": "wanderer",
+    "startCamera": "1a",
+    "route": ["1a", "2d", "1d", "1c", "1d", "1e", "3d", "1e", "3e"],
+    "attackSide": "left",
+    "movementInterval": 7.4,
+    "backtrackChance": 0.18,
+    "doorGraceSeconds": 5.2,
+    "aiByNight": [3, 5, 7, 10, 12, 15, 20]
+  },
+  {
+    "id": "girl",
+    "name": "Girl Neegy",
+    "behavior": "lurker",
+    "startCamera": "1a",
+    "route": ["1a", "2d", "1d", "2b", "1d", "2e", "2a", "2e", "4e"],
+    "attackSide": "right",
+    "movementInterval": 8.1,
+    "backtrackChance": 0.24,
+    "doorGraceSeconds": 5.8,
+    "aiByNight": [1, 3, 5, 8, 11, 14, 20]
+  },
+  {
+    "id": "rapper",
+    "name": "Rapper Neegy",
+    "behavior": "stalker",
+    "startCamera": "1a",
+    "route": ["1a", "2d", "1d", "2c", "1d", "2e", "3a", "2e", "4e"],
+    "attackSide": "right",
+    "movementInterval": 6.2,
+    "backtrackChance": 0,
+    "doorGraceSeconds": 3.2,
+    "aiByNight": [0, 0, 2, 4, 7, 10, 20]
+  },
+  {
+    "id": "farmer",
+    "name": "Farmer Neegy",
+    "behavior": "runner",
+    "startCamera": "2f",
+    "route": ["2f", "1e", "3e"],
+    "attackSide": "left",
+    "movementInterval": 9.2,
+    "backtrackChance": 0,
+    "doorGraceSeconds": 2.4,
+    "aiByNight": [1, 2, 4, 6, 9, 12, 20]
+  },
+  {
+    "id": "banana",
+    "name": "Banana Neegy",
+    "behavior": "corruptor",
+    "startCamera": "1a",
+    "route": ["1a", "2d", "1d", "2e", "3b", "2e", "4e"],
+    "attackSide": "right",
+    "movementInterval": 8.8,
+    "backtrackChance": 0.12,
+    "doorGraceSeconds": 4.8,
+    "aiByNight": [0, 0, 0, 3, 6, 10, 20]
+  }
 ]
