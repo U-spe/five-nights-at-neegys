@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>5 Nights at Neegys Bank Renderer</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    :root {
+      color-scheme: dark;
+      font-family: Arial, sans-serif;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      background: #020303;
+      color: white;
+      overflow: hidden;
+    }
+
+    #app {
+      width: min(100vw, 1280px);
+      aspect-ratio: 16 / 9;
+      position: relative;
+      overflow: hidden;
+      background: black;
+    }
+
+    #stage,
+    #stage canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    #stage canvas.cctv {
+      filter: brightness(.72) contrast(1.2) saturate(.62);
+    }
+
+    #scanlines {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      opacity: .2;
+      background:
+        radial-gradient(circle at center, transparent 48%, #000 125%),
+        repeating-linear-gradient(
+          transparent 0 3px,
+          rgba(0, 0, 0, .36) 4px
+        );
+    }
+
+    #cameraInfo {
+      position: absolute;
+      top: 20px;
+      left: 24px;
+      font: 700 26px monospace;
+      text-shadow: 2px 2px #000;
+    }
+
+    #cameraName {
+      margin-top: 5px;
+      color: #b9ffd2;
+      font-size: 18px;
+    }
+
+    #toolbar {
+      position: absolute;
+      left: 50%;
+      bottom: 18px;
+      width: min(94%, 850px);
+      transform: translateX(-50%);
+      display: grid;
+      grid-template-columns: auto 1fr auto auto;
+      gap: 8px;
+      padding: 9px;
+      background: rgba(0, 0, 0, .82);
+      border: 1px solid #718078;
+    }
+
+    button,
+    select {
+      min-height: 42px;
+      padding: 0 14px;
+      border: 1px solid #718078;
+      border-radius: 3px;
+      background: #101512;
+      color: white;
+      font: 700 14px monospace;
+    }
+
+    button:hover,
+    select:hover {
+      background: #1e2a23;
+    }
+
+    @media (max-width: 650px) {
+      #toolbar {
+        grid-template-columns: auto 1fr auto;
+      }
+
+      #saveButton {
+        grid-column: 1 / -1;
+      }
+
+      #cameraInfo {
+        top: 12px;
+        left: 14px;
+        font-size: 19px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main id="app">
+    <div id="stage"></div>
+
+    <div id="scanlines"></div>
+
+    <div id="cameraInfo">
+      <div id="cameraId"></div>
+      <div id="cameraName"></div>
+    </div>
+
+    <div id="toolbar">
+      <button id="previousButton">PREV</button>
+      <select id="cameraSelect"></select>
+      <button id="nextButton">NEXT</button>
+      <button id="saveButton">SAVE PNG</button>
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.min.js"></script>
+
+  <script>
+    const WIDTH = 1280;
+    const HEIGHT = 720;
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x050706);
+    scene.fog = new THREE.Fog(0x050706, 35, 75);
+
+    const camera = new THREE.PerspectiveCamera(76, WIDTH / HEIGHT, 0.1, 150);
+
+    const renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      preserveDrawingBuffer: true
+    });
+
+    renderer.setSize(WIDTH, HEIGHT, false);
+    renderer.setPixelRatio(1);
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.22;
+
+    document.querySelector("#stage").append(renderer.domElement);
+    renderer.domElement.classList.add("cctv");
+
+    const standard = (color, options = {}) =>
+      new THREE.MeshStandardMaterial({
+        color,
+        roughness: 0.65,
+        metalness: 0.05,
+        ...options
+      });
+
+    const materials = {
+      floor: standard(0x9ca39f),
+      carpet: standard(0x172c25),
+      wall: standard(0xe4e4dc),
+      ceiling: standard(0xd5d8d2),
+      dark: standard(0x101412),
+      green: standard(0x155c3c),
+      wood: standard(0x7a5535),
+      steel: standard(0x737b7d, { metalness: 0.72, roughness: 0.25 }),
+      white: standard(0xf2f2ed),
+      black: standard(0x080909),
+      red: standard(0x7f1717),
+      blue: standard(0x183965),
+      glass: standard(0x8ddce3, {
+        transparent: true,
+        opacity: 0.22,
+        roughness: 0.08,
+        metalness: 0.15,
+        depthWrite: false
+      }),
+      light: standard(0xffffff, {
+        emissive: 0xffffff,
+        emissiveIntensity: 4
+      }),
+      screenGreen: standard(0x07110b, {
+        emissive: 0x27ff72,
+        emissiveIntensity: 2.6
+      }),
+      screenRed: standard(0x160707, {
+        emissive: 0xff2828,
+        emissiveIntensity: 2.6
+      })
+    };
+
+    function box(x, y, z, width, height, depth, material, rotationY = 0) {
+      const mesh = new THREE.Mesh(
+        new THREE.BoxGeometry(width, height, depth),
+        material
+      );
+
+      mesh.position.set(x, y, z);
+      mesh.rotation.y = rotationY;
+      scene.add(mesh);
+      return mesh;
+    }
+
+    function cylinder(x, y, z, radius, depth, material, rotationX = 0) {
+      const mesh = new THREE.Mesh(
+        new THREE.CylinderGeometry(radius, radius, depth, 48),
+        material
+      );
+
+      mesh.position.set(x, y, z);
+      mesh.rotation.x = rotationX;
+      scene.add(mesh);
+      return mesh;
+    }
+
+    function textTexture(text, background = "#123c2a") {
+      const canvas = document.createElement("canvas");
+      canvas.width = 1024;
+      canvas.height = 256;
+
+      const context = canvas.getContext("2d");
+      context.fillStyle = background;
+      context.fillRect(0, 0, canvas.width, canvas.height);
+
+      let size = 104;
+      context.font = `800 ${size}px Arial`;
+
+      while (context.measureText(text).width > 900 && size > 42) {
+        size -= 4;
+        context.font = `800 ${size}px Arial`;
+      }
+
+      context.fillStyle = "#e9fff1";
+      context.textAlign = "center";
+      context.textBaseline = "middle";
+      context.fillText(text, 512, 128);
+
+      const texture = new THREE.CanvasTexture(canvas);
+      texture.colorSpace = THREE.SRGBColorSpace;
+      return texture;
+    }
+
+    function sign(text, x, y, z, rotationY = 0, width = 5) {
+      const mesh = new THREE.Mesh(
+        new THREE.PlaneGeometry(width, width / 4),
+        new THREE.MeshBasicMaterial({
+          map: textTexture(text),
+          side: THREE.DoubleSide
+        })
+      );
+
+      mesh.position.set(x, y, z);
+      mesh.rotation.y = rotationY;
+      scene.add(mesh);
+    }
+
+    function chair(x, z, rotationY = 0) {
+      box(x, 0.45, z, 1.1, 0.22, 1.1, materials.blue, rotationY);
+      box(
+        x - Math.sin(rotationY) * 0.45,
+        1.05,
+        z - Math.cos(rotationY) * 0.45,
+        1.1,
+        1.15,
+        0.18,
+        materials.blue,
+        rotationY
+      );
+    }
+
+    function monitor(x, y, z, red = false) {
+      box(
+        x,
+        y,
+        z,
+        1.05,
+        0.65,
+        0.12,
+        red ? materials.screenRed : materials.screenGreen
+      );
+    }
+
+    function ceilingLight(x, z, width = 4) {
+      box(x, 5.92, z, width, 0.08, 0.65, materials.light);
+    }
+
+    function tellerRoom(x, z, label) {
+      box(x, 0.03, z, 10.5, 0.08, 8, materials.carpet);
+      box(x, 3, z - 3.4, 10.5, 6, 0.3, materials.wall);
+      box(x - 5.1, 3, z, 0.3, 6, 7, materials.wall);
+      box(x + 5.1, 3, z, 0.3, 6, 7, materials.wall);
+
+      for (let station = -1; station <= 1; station++) {
+        const stationX = x + station * 2.8;
+
+        box(stationX, 0.7, z, 2.4, 1.4, 1.15, materials.wood);
+        box(stationX, 1.45, z + 0.03, 2.2, 0.16, 1.05, materials.white);
+        monitor(stationX, 2.05, z - 0.35, station === 1);
+        chair(stationX, z - 1.35, Math.PI);
+      }
+
+      sign(label, x, 4.65, z - 3.2);
+      ceilingLight(x, z - 1);
+      ceilingLight(x, z + 2);
+    }
+
+    function bathroom(x, z, label, mensRoom) {
+      box(x, 0.04, z, 10, 0.08, 7.5, materials.floor);
+      box(x, 3, z - 3.5, 10, 6, 0.3, materials.wall);
+      box(x - 4.8, 3, z, 0.3, 6, 7, materials.wall);
+      box(x + 4.8, 3, z, 0.3, 6, 7, materials.wall);
+
+      for (let stall = 0; stall < 3; stall++) {
+        const stallX = x + 0.2 + stall * 1.45;
+        box(stallX, 1.3, z - 2.25, 1.15, 2.6, 0.12, materials.dark);
+        box(stallX - 0.65, 1.3, z - 1.5, 0.1, 2.6, 1.6, materials.steel);
+      }
+
+      box(x - 2.7, 0.85, z - 2.3, 2.6, 0.25, 1, materials.white);
+      box(x - 2.7, 2.05, z - 3.22, 2.7, 1.5, 0.08, materials.glass);
+
+      if (mensRoom) {
+        for (let item = 0; item < 3; item++) {
+          box(
+            x - 3.55 + item * 1.05,
+            0.8,
+            z - 2.6,
+            0.65,
+            1.15,
+            0.45,
+            materials.white
+          );
+        }
+      }
+
+      sign(label, x, 4.7, z - 3.3);
+      ceilingLight(x, z);
+    }
+
+    function createVault(x, z) {
+      box(x, 0.03, z, 11, 0.08, 10, materials.floor);
+      box(x, 3, z - 4.2, 11, 6, 0.35, materials.dark);
+
+      for (let row = 0; row < 5; row++) {
+        for (let column = 0; column < 4; column++) {
+          box(
+            x - 4.3 + column * 1.15,
+            0.55 + row * 0.82,
+            z - 3.92,
+            0.98,
+            0.68,
+            0.12,
+            materials.steel
+          );
+
+          box(
+            x + 1.1 + column * 1.15,
+            0.55 + row * 0.82,
+            z - 3.92,
+            0.98,
+            0.68,
+            0.12,
+            materials.steel
+          );
+        }
+      }
+
+      cylinder(x, 2.3, z - 3.72, 2.35, 0.35, materials.steel, Math.PI / 2);
+      cylinder(x, 2.3, z - 3.48, 0.72, 0.18, materials.wood, Math.PI / 2);
+
+      sign("BANK SAFE", x, 5, z - 4);
+      ceilingLight(x, z - 1);
+    }
+
+    function createStockRoom(x, z) {
+      box(x, 0.03, z, 11, 0.08, 10, materials.carpet);
+      box(x, 3, z - 4.2, 11, 6, 0.35, materials.dark);
+      sign("STOCK MARKET ROOM", x, 5, z - 4);
+
+      for (let row = 0; row < 2; row++) {
+        for (let desk = 0; desk < 4; desk++) {
+          const deskX = x - 3.75 + desk * 2.45;
+          const deskZ = z - 1.3 + row * 2.5;
+
+          box(deskX, 0.75, deskZ, 2, 0.18, 1.15, materials.wood);
+          monitor(deskX - 0.45, 1.45, deskZ - 0.25, (desk + row) % 2 === 0);
+          monitor(deskX + 0.45, 1.45, deskZ - 0.25, (desk + row) % 2 !== 0);
+          chair(deskX, deskZ + 0.85);
+        }
+      }
+
+      ceilingLight(x, z);
+    }
+
+    function createHallway(x, label, side) {
+      box(x, 0.04, 1, 4, 0.08, 22, materials.carpet);
+      box(x + side * 2, 3, 1, 0.25, 6, 22, materials.wall);
+      box(x - side * 2, 3, 1, 0.25, 6, 22, materials.wall);
+
+      for (let door = -6; door <= 6; door += 6) {
+        box(
+          x + side * 1.86,
+          2,
+          door,
+          0.16,
+          4,
+          2.2,
+          materials.wood
+        );
+      }
+
+      sign(label, x, 4.5, -9.85);
+      ceilingLight(x, -5, 2.5);
+      ceilingLight(x, 1, 2.5);
+      ceilingLight(x, 7, 2.5);
+    }
+
+    function createOffice() {
+      box(0, 0.04, -5.5, 8, 0.08, 7, materials.carpet);
+      box(0, 3, -8.9, 8, 6, 0.3, materials.wall);
+      box(-3.9, 3, -5.5, 0.3, 6, 7, materials.glass);
+      box(3.9, 3, -5.5, 0.3, 6, 7, materials.glass);
+
+      box(0, 2, -2.05, 2.7, 4, 0.25, materials.dark);
+      sign("OFFICE LOCKED", 0, 3.6, -1.9);
+
+      box(0, 0.75, -6.4, 4.5, 0.18, 2, materials.wood);
+      monitor(0, 1.55, -6.75);
+      chair(0, -7.6, Math.PI);
+      ceilingLight(0, -5.5);
+    }
+
+    function createDoor(x, label, side) {
+      box(x, 2.1, -4, 0.4, 4.2, 3.2, materials.steel);
+      sign(label, x - side * 0.23, 4.35, -4, side * Math.PI / 2, 3.3);
+      box(x - side * 0.24, 2.1, -4, 0.12, 0.22, 2.1, materials.red);
+    }
+
+    // Bank shell
+    box(0, -0.16, 0, 52, 0.3, 60, materials.floor);
+    box(0, 6.08, 0, 52, 0.2, 60, materials.ceiling);
+    box(-26, 3, 0, 0.4, 6, 60, materials.wall);
+    box(26, 3, 0, 0.4, 6, 60, materials.wall);
+    box(0, 3, -30, 52, 6, 0.4, materials.wall);
+
+    // Front wall with entrance opening
+    box(-15, 3, 30, 22, 6, 0.4, materials.wall);
+    box(15, 3, 30, 22, 6, 0.4, materials.wall);
+    box(0, 5.25, 30, 8, 1.5, 0.4, materials.wall);
+
+    box(-2.05, 2.15, 29.85, 3.8, 4.3, 0.12, materials.glass);
+    box(2.05, 2.15, 29.85, 3.8, 4.3, 0.12, materials.glass);
+    box(0, 2.15, 29.72, 0.16, 4.3, 0.22, materials.steel);
+
+    sign("NEEGY NATIONAL BANK", 0, 5.15, 29.7, Math.PI, 8);
+
+    // Main lobby
+    box(0, 0.05, 18, 18, 0.1, 12, materials.carpet);
+    sign("MAIN ROOM", 0, 4.8, 12.2);
+
+    chair(-3.2, 18);
+    chair(-1.5, 18);
+    chair(1.5, 18, Math.PI);
+    chair(3.2, 18, Math.PI);
+
+    // Main desk
+    box(0, 0.8, 10, 7, 1.6, 1.5, materials.wood);
+    box(0, 1.65, 10.1, 6.8, 0.12, 1.35, materials.white);
+    monitor(-1.5, 2.15, 9.65);
+    monitor(1.5, 2.15, 9.65, true);
+    sign("MAIN DESK", 0, 1, 10.78, Math.PI, 4.6);
+
+    // Room creation
+    tellerRoom(-17, 18, "TELLER ROOM 1");
+    tellerRoom(17, 18, "TELLER ROOM 2");
+    tellerRoom(-17, 4, "TELLER ROOM 3");
+    tellerRoom(17, 4, "TELLER ROOM 4");
+    tellerRoom(0, -20, "TELLER ROOM 5");
+
+    bathroom(-17, -9, "MEN'S BATHROOM", true);
+    bathroom(17, -9, "WOMEN'S BATHROOM", false);
+
+    createVault(17, -23);
+    createStockRoom(-17, -23);
+
+    createHallway(-9, "LEFT HALLWAY", -1);
+    createHallway(9, "RIGHT HALLWAY", 1);
+
+    createOffice();
+    createDoor(-11, "LEFT DOOR", -1);
+    createDoor(11, "RIGHT DOOR", 1);
+
+    // Lighting
+    scene.add(new THREE.HemisphereLight(0xeafff2, 0x17201b, 2.5));
+
+    const keyLight = new THREE.DirectionalLight(0xffffff, 2.2);
+    keyLight.position.set(12, 18, 20);
+    scene.add(keyLight);
+
+    const lobbyLight = new THREE.PointLight(0xd8ffe6, 85, 38);
+    lobbyLight.position.set(0, 5, 14);
+    scene.add(lobbyLight);
+
+    const rearLight = new THREE.PointLight(0xd9e8ff, 70, 32);
+    rearLight.position.set(0, 5, -18);
+    scene.add(rearLight);
+
+    const CAMERAS = [
+      { id: "1A", name: "Bank Safe", position: [17, 4.7, -16], target: [17, 1.8, -23] },
+      { id: "1B", name: "Teller Room 1", position: [-17, 4.7, 22.4], target: [-17, 1.5, 17] },
+      { id: "1C", name: "Main Entrance", position: [-7, 4.9, 24], target: [0, 1.8, 29.5] },
+      { id: "1D", name: "Main Room", position: [-7, 5, 23], target: [0, 1.3, 17] },
+      { id: "2A", name: "Teller Room 2", position: [17, 4.7, 22.4], target: [17, 1.5, 17] },
+      { id: "2B", name: "Men's Bathroom", position: [-17, 4.5, -4.8], target: [-17, 1.3, -10] },
+      { id: "2C", name: "Women's Bathroom", position: [17, 4.5, -4.8], target: [17, 1.3, -10] },
+      { id: "3A", name: "Teller Room 3", position: [-17, 4.7, 8.3], target: [-17, 1.5, 3] },
+      { id: "3B", name: "Stock Market Room", position: [-17, 4.7, -16], target: [-17, 1.5, -23] },
+      { id: "3D", name: "Teller Room 4", position: [17, 4.7, 8.3], target: [17, 1.5, 3] },
+      { id: "2D", name: "Main Desk", position: [-6, 4.4, 15], target: [0, 1.5, 10] },
+      { id: "1E", name: "Left Hallway", position: [-9, 4.8, 10], target: [-9, 1.5, -9] },
+      { id: "2E", name: "Right Hallway", position: [9, 4.8, 10], target: [9, 1.5, -9] },
+      { id: "3E", name: "Left Door", position: [-5, 4, -1], target: [-11, 1.9, -4] },
+      { id: "4E", name: "Right Door", position: [5, 4, -1], target: [11, 1.9, -4] },
+      { id: "1F", name: "Office, Locked", position: [0, 4.2, 2], target: [0, 1.9, -2] },
+      { id: "2F", name: "Teller Room 5", position: [0, 4.7, -15], target: [0, 1.5, -21] }
+    ];
+
+    const select = document.querySelector("#cameraSelect");
+    const cameraId = document.querySelector("#cameraId");
+    const cameraName = document.querySelector("#cameraName");
+
+    let currentCamera = 0;
+
+    CAMERAS.forEach((item, index) => {
+      const option = document.createElement("option");
+      option.value = index;
+      option.textContent = `CAM ${item.id} · ${item.name}`;
+      select.append(option);
+    });
+
+    function showCamera(index) {
+      currentCamera = (index + CAMERAS.length) % CAMERAS.length;
+
+      const selected = CAMERAS[currentCamera];
+
+      camera.position.set(...selected.position);
+      camera.lookAt(...selected.target);
+
+      select.value = currentCamera;
+      cameraId.textContent = `CAM ${selected.id}`;
+      cameraName.textContent = selected.name.toUpperCase();
+
+      renderer.render(scene, camera);
+    }
+
+    function saveCameraImage() {
+      renderer.render(scene, camera);
+
+      const selected = CAMERAS[currentCamera];
+      const output = document.createElement("canvas");
+      output.width = WIDTH;
+      output.height = HEIGHT;
+
+      const context = output.getContext("2d");
+
+      context.filter = "brightness(72%) contrast(120%) saturate(62%)";
+      context.drawImage(renderer.domElement, 0, 0, WIDTH, HEIGHT);
+      context.filter = "none";
+
+      context.fillStyle = "rgba(0,0,0,.18)";
+
+      for (let y = 0; y < HEIGHT; y += 4) {
+        context.fillRect(0, y, WIDTH, 1);
+      }
+
+      context.fillStyle = "rgba(0,0,0,.55)";
+      context.fillRect(0, 0, WIDTH, 72);
+      context.fillRect(0, HEIGHT - 54, WIDTH, 54);
+
+      context.font = "bold 31px monospace";
+      context.fillStyle = "#ffffff";
+      context.fillText(`CAM ${selected.id}`, 28, 43);
+
+      context.font = "bold 21px monospace";
+      context.fillStyle = "#b9ffd2";
+      context.fillText(selected.name.toUpperCase(), 190, 42);
+
+      context.font = "18px monospace";
+      context.fillStyle = "#ffffff";
+      context.fillText("NIGHT 1   12:00 AM", 28, HEIGHT - 20);
+
+      output.toBlob(blob => {
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = `${selected.id.toLowerCase()}.png`;
+        link.click();
+        URL.revokeObjectURL(link.href);
+      });
+    }
+
+    document.querySelector("#previousButton").onclick = () =>
+      showCamera(currentCamera - 1);
+
+    document.querySelector("#nextButton").onclick = () =>
+      showCamera(currentCamera + 1);
+
+    document.querySelector("#saveButton").onclick = saveCameraImage;
+
+    select.onchange = () => showCamera(Number(select.value));
+
+    window.addEventListener("keydown", event => {
+      if (event.key === "ArrowLeft") showCamera(currentCamera - 1);
+      if (event.key === "ArrowRight") showCamera(currentCamera + 1);
+      if (event.key.toLowerCase() === "s") saveCameraImage();
+    });
+
+    showCamera(0);
+  </script>
+</body>
+</html>
