@@ -1,120 +1,188 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#020403">
 
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1,
-        maximum-scale=1, user-scalable=no"
-    >
+  <title>5 Nights at Neegys</title>
 
-    <meta
-        name="description"
-        content="5 Nights at Neegys, a browser survival horror game."
-    >
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=VT323&display=swap"
+    rel="stylesheet"
+  >
 
-    <meta
-        name="theme-color"
-        content="#000000"
-    >
-
-    <title>5 Nights at Neegys</title>
-
-    <link
-        rel="preconnect"
-        href="https://fonts.googleapis.com"
-    >
-
-    <link
-        rel="preconnect"
-        href="https://fonts.gstatic.com"
-        crossorigin
-    >
-
-    <link
-        href="https://fonts.googleapis.com/css2?family=VT323&display=swap"
-        rel="stylesheet"
-    >
-
-    <link
-        rel="stylesheet"
-        href="css/style.css"
-    >
+  <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
+  <main id="gameShell" aria-label="5 Nights at Neegys game">
+    <canvas
+      id="sceneCanvas"
+      width="1280"
+      height="720"
+    ></canvas>
 
-    <div id="gameShell">
+    <div id="cameraNoise" aria-hidden="true"></div>
+    <div id="scanlines" aria-hidden="true"></div>
+    <div id="flash" aria-hidden="true"></div>
 
-        <canvas
-            id="sceneCanvas"
-            width="1280"
-            height="720"
-            aria-label="5 Nights at Neegys game"
-        ></canvas>
+    <section id="hud" class="hidden" aria-live="polite">
+      <div id="clockHud">
+        <strong id="hourLabel">12 AM</strong>
+        <span id="nightLabel">NIGHT 1</span>
+      </div>
 
-        <canvas
-            id="uiCanvas"
-            width="1280"
-            height="720"
-        ></canvas>
+      <div id="powerHud">
+        <span>
+          POWER LEFT:
+          <strong id="powerLabel">100%</strong>
+        </span>
 
-    </div>
+        <div id="powerMeter">
+          <i id="powerFill"></i>
+        </div>
 
+        <span>USAGE:</span>
+
+        <div id="usageBars" aria-label="Power usage">
+          <i></i>
+          <i></i>
+          <i></i>
+          <i></i>
+          <i></i>
+          <i></i>
+        </div>
+      </div>
+    </section>
+
+    <section id="officeControls" class="hidden">
+      <div class="door-panel left-panel">
+        <button
+          id="leftDoorButton"
+          class="door-button"
+          type="button"
+        >
+          DOOR
+        </button>
+
+        <button
+          id="leftLightButton"
+          class="light-button"
+          type="button"
+        >
+          LIGHT
+        </button>
+      </div>
+
+      <div class="door-panel right-panel">
+        <button
+          id="rightDoorButton"
+          class="door-button"
+          type="button"
+        >
+          DOOR
+        </button>
+
+        <button
+          id="rightLightButton"
+          class="light-button"
+          type="button"
+        >
+          LIGHT
+        </button>
+      </div>
+    </section>
+
+    <section
+      id="cameraInterface"
+      class="hidden"
+      aria-label="Security camera monitor"
+    >
+      <div id="cameraHeading">
+        <strong id="cameraCode">CAM 1A</strong>
+        <span id="cameraName">BANK SAFE</span>
+        <span id="recordingDot">● REC</span>
+      </div>
+
+      <div id="cameraMap" aria-label="Camera map"></div>
+
+      <div id="cameraHelp">
+        CLICK A ROOM OR USE ← →
+      </div>
+    </section>
+
+    <button
+      id="monitorButton"
+      class="hidden"
+      type="button"
+    >
+      <span id="monitorButtonText">
+        OPEN CAMERAS
+      </span>
+    </button>
 
     <div
-        id="audioPermission"
-        class="game-dialog hidden"
-    >
-        <section>
-            <h1>Sound Permission</h1>
+      id="message"
+      class="hidden"
+      aria-live="assertive"
+    ></div>
 
-            <p>
-                Tap below to enable game audio.
-            </p>
+    <section id="titleScreen" class="screen-card">
+      <div class="title-copy">
+        <p class="eyebrow">
+          NEEGY NATIONAL BANK
+        </p>
 
-            <button id="allowAudioButton">
-                ENABLE AUDIO
-            </button>
-        </section>
-    </div>
+        <h1>
+          5 NIGHTS<br>
+          AT NEEGYS
+        </h1>
 
+        <p class="title-warning">
+          Night security position available.<br>
+          Movement detected after closing.
+        </p>
 
-    <div
-        id="fullscreenDialog"
-        class="game-dialog hidden"
-    >
-        <section>
-            <h1>Fullscreen Paused</h1>
+        <button id="startButton" type="button">
+          NEW GAME
+        </button>
 
-            <p>
-                Return to fullscreen mode?
-            </p>
+        <p class="controls-copy">
+          A/D doors · Q/E lights · Space cameras · F fullscreen
+        </p>
+      </div>
 
-            <button id="enterFullscreenButton">
-                ENTER FULLSCREEN
-            </button>
+      <div id="titleFigure" aria-hidden="true">
+        <i></i>
+        <b></b>
+        <em></em>
+      </div>
 
-            <button
-                id="closeFullscreenButton"
-                class="secondary"
-            >
-                CANCEL
-            </button>
-        </section>
-    </div>
+      <div class="copyright">
+        AN ORIGINAL FAN-GAME PROTOTYPE
+      </div>
+    </section>
 
+    <section id="nightIntro" class="screen-card hidden">
+      <p id="introNight">NIGHT 1</p>
+      <strong>12:00 AM</strong>
+    </section>
 
-    <noscript>
-        JavaScript is required to play 5 Nights at Neegys.
-    </noscript>
+    <section id="resultScreen" class="screen-card hidden">
+      <h2 id="resultTitle">6 AM</h2>
+      <p id="resultText">SHIFT COMPLETE</p>
 
+      <button id="restartButton" type="button">
+        PLAY AGAIN
+      </button>
+    </section>
+  </main>
 
-    <script
-        type="module"
-        src="js/game.js"
-    ></script>
-
+  <script src="https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.min.js"></script>
+  <script src="js/security-cameras.js"></script>
+  <script src="js/game.js"></script>
 </body>
 </html>
