@@ -4,28 +4,15 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#020403">
-
   <title>5 Nights at Neegys</title>
-
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-
-  <link
-    href="https://fonts.googleapis.com/css2?family=VT323&display=swap"
-    rel="stylesheet"
-  >
-
-  <!-- The CSS is inside the css folder. -->
-  <link rel="stylesheet" href="/css/style.css?v=3">
+  <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./css/style.css?v=4">
 </head>
-
 <body>
   <main id="gameShell" aria-label="5 Nights at Neegys game">
-    <canvas
-      id="sceneCanvas"
-      width="1280"
-      height="720"
-    ></canvas>
+    <canvas id="sceneCanvas" width="1280" height="720"></canvas>
 
     <div id="cameraNoise" aria-hidden="true"></div>
     <div id="scanlines" aria-hidden="true"></div>
@@ -38,104 +25,49 @@
       </div>
 
       <div id="powerHud">
-        <span>
-          POWER LEFT:
-          <strong id="powerLabel">100%</strong>
-        </span>
-
-        <div id="powerMeter">
-          <i id="powerFill"></i>
-        </div>
-
+        <span>POWER LEFT: <strong id="powerLabel">100%</strong></span>
+        <div id="powerMeter"><i id="powerFill"></i></div>
         <span>USAGE:</span>
-
         <div id="usageBars" aria-label="Power usage">
-          <i></i>
-          <i></i>
-          <i></i>
-          <i></i>
-          <i></i>
-          <i></i>
+          <i></i><i></i><i></i><i></i><i></i><i></i>
         </div>
       </div>
     </section>
 
     <section id="officeControls" class="hidden">
       <div class="door-panel left-panel">
-        <button
-          id="leftDoorButton"
-          class="door-button"
-          type="button"
-        >
-          DOOR
-        </button>
-
-        <button
-          id="leftLightButton"
-          class="light-button"
-          type="button"
-        >
-          LIGHT
-        </button>
+        <button id="leftDoorButton" class="door-button" type="button">DOOR</button>
+        <button id="leftLightButton" class="light-button" type="button">LIGHT</button>
       </div>
 
       <div class="door-panel right-panel">
-        <button
-          id="rightDoorButton"
-          class="door-button"
-          type="button"
-        >
-          DOOR
-        </button>
-
-        <button
-          id="rightLightButton"
-          class="light-button"
-          type="button"
-        >
-          LIGHT
-        </button>
+        <button id="rightDoorButton" class="door-button" type="button">DOOR</button>
+        <button id="rightLightButton" class="light-button" type="button">LIGHT</button>
       </div>
     </section>
 
-    <section
-      id="cameraInterface"
-      class="hidden"
-      aria-label="Security camera monitor"
-    >
+    <section id="cameraInterface" class="hidden" aria-label="Security camera monitor">
       <div id="cameraHeading">
         <strong id="cameraCode">CAM 1A</strong>
         <span id="cameraName">BANK SAFE</span>
         <span id="recordingDot">● REC</span>
+        <span id="cameraTimestamp">NIGHT 1 · 12:00:00 AM</span>
+        <span id="cameraSignal">NNB-SEC · SIGNAL 98%</span>
       </div>
 
       <div id="cameraMap" aria-label="Camera map">
         <div class="map-title">CAMERA NETWORK</div>
         <div class="map-office">YOU</div>
       </div>
-
-      <div id="cameraHelp">
-        SELECT CAMERA · ← →
-      </div>
+      <div id="cameraHelp">SELECT CAMERA · ← →</div>
     </section>
 
-    <button
-      id="monitorButton"
-      class="hidden"
-      type="button"
-    >
-      <span id="monitorButtonText">
-        OPEN CAMERAS
-      </span>
+    <button id="monitorButton" class="hidden" type="button">
+      <span id="monitorButtonText">OPEN CAMERAS</span>
     </button>
 
-    <div
-      id="message"
-      class="hidden"
-      aria-live="assertive"
-    ></div>
+    <div id="message" class="hidden" aria-live="assertive"></div>
 
-    <!-- Restored old-style menu -->
     <section id="titleScreen" class="screen-card">
       <div class="title-grid" aria-hidden="true"></div>
 
@@ -146,37 +78,20 @@
           <b>NEEGYS</b>
         </h1>
 
-        <p class="eyebrow">
-          NEEGY NATIONAL BANK
-        </p>
+        <p class="eyebrow">NEEGY NATIONAL BANK</p>
 
         <nav id="titleMenu" aria-label="Main menu">
-          <button
-            id="startButton"
-            class="menu-item active"
-            data-menu-index="0"
-            type="button"
-          >
+          <button id="startButton" class="menu-item active" data-menu-index="0" type="button">
             <span>NEW GAME</span>
             <small>NIGHT 1</small>
           </button>
 
-          <button
-            id="continueButton"
-            class="menu-item"
-            data-menu-index="1"
-            type="button"
-          >
+          <button id="continueButton" class="menu-item" data-menu-index="1" type="button">
             <span>CONTINUE</span>
             <small id="continueNight">NIGHT 1</small>
           </button>
 
-          <button
-            id="customNightButton"
-            class="menu-item"
-            data-menu-index="2"
-            type="button"
-          >
+          <button id="customNightButton" class="menu-item" data-menu-index="2" type="button">
             <span>CUSTOM NIGHT</span>
             <small>20 / 20</small>
           </button>
@@ -184,21 +99,13 @@
       </div>
 
       <div class="bank-seal" aria-hidden="true">
-        <div class="seal-ring">
-          <b>N</b>
-        </div>
-
+        <div class="seal-ring"><b>N</b></div>
         <span>SECURITY SYSTEM</span>
       </div>
 
       <div class="title-footer">
-        <span>
-          ↑ ↓ SELECT · ENTER CONFIRM · F FULLSCREEN
-        </span>
-
-        <span>
-          v0.3 THREE.JS BUILD
-        </span>
+        <span>↑ ↓ SELECT · ENTER CONFIRM · F FULLSCREEN</span>
+        <span>v0.4 SECURITY BUILD</span>
       </div>
     </section>
 
@@ -210,10 +117,7 @@
     <section id="resultScreen" class="screen-card hidden">
       <h2 id="resultTitle">6 AM</h2>
       <p id="resultText">SHIFT COMPLETE</p>
-
-      <button id="restartButton" type="button">
-        PLAY AGAIN
-      </button>
+      <button id="restartButton" type="button">PLAY AGAIN</button>
     </section>
   </main>
 
