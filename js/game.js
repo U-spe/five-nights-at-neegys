@@ -3,467 +3,437 @@
 (() => {
   "use strict";
 
-  const CAMERA_DEFINITIONS = [
+  const canvas =
+    document.querySelector("#sceneCanvas");
+
+  const gameShell =
+    document.querySelector("#gameShell");
+
+  const titleScreen =
+    document.querySelector("#titleScreen");
+
+  const nightIntro =
+    document.querySelector("#nightIntro");
+
+  const resultScreen =
+    document.querySelector("#resultScreen");
+
+  const hud =
+    document.querySelector("#hud");
+
+  const officeControls =
+    document.querySelector("#officeControls");
+
+  const cameraInterface =
+    document.querySelector("#cameraInterface");
+
+  const cameraMap =
+    document.querySelector("#cameraMap");
+
+  const cameraNoise =
+    document.querySelector("#cameraNoise");
+
+  const flash =
+    document.querySelector("#flash");
+
+  const message =
+    document.querySelector("#message");
+
+  const monitorButton =
+    document.querySelector("#monitorButton");
+
+  const monitorButtonText =
+    document.querySelector("#monitorButtonText");
+
+  const leftDoorButton =
+    document.querySelector("#leftDoorButton");
+
+  const rightDoorButton =
+    document.querySelector("#rightDoorButton");
+
+  const leftLightButton =
+    document.querySelector("#leftLightButton");
+
+  const rightLightButton =
+    document.querySelector("#rightLightButton");
+
+  const hourLabel =
+    document.querySelector("#hourLabel");
+
+  const nightLabel =
+    document.querySelector("#nightLabel");
+
+  const powerLabel =
+    document.querySelector("#powerLabel");
+
+  const powerFill =
+    document.querySelector("#powerFill");
+
+  const usageBars = [
+    ...document.querySelectorAll(
+      "#usageBars i"
+    )
+  ];
+
+  const cameraCode =
+    document.querySelector("#cameraCode");
+
+  const cameraName =
+    document.querySelector("#cameraName");
+
+  const introNight =
+    document.querySelector("#introNight");
+
+  const resultTitle =
+    document.querySelector("#resultTitle");
+
+  const resultText =
+    document.querySelector("#resultText");
+
+  const renderer =
+    new THREE.WebGLRenderer({
+      canvas,
+      antialias: true,
+      powerPreference: "high-performance"
+    });
+
+  renderer.setSize(
+    1280,
+    720,
+    false
+  );
+
+  renderer.setPixelRatio(
+    Math.min(
+      window.devicePixelRatio || 1,
+      1.35
+    )
+  );
+
+  renderer.outputColorSpace =
+    THREE.SRGBColorSpace;
+
+  renderer.toneMapping =
+    THREE.ACESFilmicToneMapping;
+
+  renderer.toneMappingExposure = 1.1;
+  renderer.shadowMap.enabled = true;
+
+  renderer.shadowMap.type =
+    THREE.PCFSoftShadowMap;
+
+  const cameraSystem =
+    window.NeegyCameras.create();
+
+  const NIGHT_SECONDS = 360;
+
+  const POWER_RATES = {
+    clock: 1,
+    cameras: 2.5,
+    lights: 2,
+    doors: 4
+  };
+
+  const ENEMY_CONFIGS = [
     {
-      id: "1a",
-      code: "1A",
-      name: "Bank Safe",
-      position: [17, 4.7, -16],
-      target: [17, 1.8, -23]
+      id: "regular",
+      name: "Regular Neegy",
+      color: 0x60ff8a,
+      start: "1a",
+
+      route: [
+        "1a",
+        "1d",
+        "2d",
+        "1e",
+        "3e"
+      ],
+
+      side: "left",
+      interval: 7.4,
+      backtrack: 0.18,
+
+      ai: [
+        3,
+        5,
+        7,
+        10,
+        12,
+        15,
+        20
+      ]
     },
+
     {
-      id: "1b",
-      code: "1B",
-      name: "Teller Room 1",
-      position: [-17, 4.7, 22.4],
-      target: [-17, 1.5, 17]
+      id: "girl",
+      name: "Girl Neegy",
+      color: 0xff6fb7,
+      start: "1a",
+
+      route: [
+        "1a",
+        "1b",
+        "3a",
+        "2e",
+        "4e"
+      ],
+
+      side: "right",
+      interval: 8.1,
+      backtrack: 0.24,
+
+      ai: [
+        1,
+        3,
+        5,
+        8,
+        11,
+        14,
+        20
+      ]
     },
+
     {
-      id: "1c",
-      code: "1C",
-      name: "Main Entrance",
-      position: [-7, 4.9, 24],
-      target: [0, 1.8, 29.5]
+      id: "rapper",
+      name: "Rapper Neegy",
+      color: 0xff8b38,
+      start: "1a",
+
+      route: [
+        "1a",
+        "1c",
+        "1d",
+        "2d",
+        "2e",
+        "4e"
+      ],
+
+      side: "right",
+      interval: 6.2,
+      backtrack: 0,
+
+      ai: [
+        0,
+        0,
+        2,
+        4,
+        7,
+        10,
+        20
+      ]
     },
+
     {
-      id: "1d",
-      code: "1D",
-      name: "Main Room",
-      position: [-7, 5, 23],
-      target: [0, 1.3, 17]
+      id: "farmer",
+      name: "Farmer Neegy",
+      color: 0xffdd55,
+      start: "2f",
+
+      route: [
+        "2f",
+        "1e",
+        "3e"
+      ],
+
+      side: "left",
+      interval: 9.2,
+      backtrack: 0,
+
+      ai: [
+        1,
+        2,
+        4,
+        6,
+        9,
+        12,
+        20
+      ]
     },
+
     {
-      id: "2a",
-      code: "2A",
-      name: "Teller Room 2",
-      position: [17, 4.7, 22.4],
-      target: [17, 1.5, 17]
-    },
-    {
-      id: "2b",
-      code: "2B",
-      name: "Men's Bathroom",
-      position: [-17, 4.5, -4.8],
-      target: [-17, 1.3, -10]
-    },
-    {
-      id: "2c",
-      code: "2C",
-      name: "Women's Bathroom",
-      position: [17, 4.5, -4.8],
-      target: [17, 1.3, -10]
-    },
-    {
-      id: "3a",
-      code: "3A",
-      name: "Teller Room 3",
-      position: [-17, 4.7, 8.3],
-      target: [-17, 1.5, 3]
-    },
-    {
-      id: "3b",
-      code: "3B",
-      name: "Stock Market Room",
-      position: [-17, 4.7, -16],
-      target: [-17, 1.5, -23]
-    },
-    {
-      id: "3d",
-      code: "3D",
-      name: "Teller Room 4",
-      position: [17, 4.7, 8.3],
-      target: [17, 1.5, 3]
-    },
-    {
-      id: "2d",
-      code: "2D",
-      name: "Main Desk",
-      position: [-6, 4.4, 15],
-      target: [0, 1.5, 10]
-    },
-    {
-      id: "1e",
-      code: "1E",
-      name: "Left Hallway",
-      position: [-9, 4.8, 10],
-      target: [-9, 1.5, -9]
-    },
-    {
-      id: "2e",
-      code: "2E",
-      name: "Right Hallway",
-      position: [9, 4.8, 10],
-      target: [9, 1.5, -9]
-    },
-    {
-      id: "3e",
-      code: "3E",
-      name: "Left Door",
-      position: [-5, 4, -1],
-      target: [-11, 1.9, -4]
-    },
-    {
-      id: "4e",
-      code: "4E",
-      name: "Right Door",
-      position: [5, 4, -1],
-      target: [11, 1.9, -4]
-    },
-    {
-      id: "2f",
-      code: "2F",
-      name: "Teller Room 5",
-      position: [0, 4.7, -15],
-      target: [0, 1.5, -21]
+      id: "banana",
+      name: "Banana Neegy",
+      color: 0xc79bff,
+      start: "3b",
+
+      route: [
+        "3b",
+        "3d",
+        "2d",
+        "2e",
+        "4e"
+      ],
+
+      side: "right",
+      interval: 8.8,
+      backtrack: 0.12,
+
+      ai: [
+        0,
+        0,
+        0,
+        3,
+        6,
+        10,
+        20
+      ]
     }
   ];
 
-  const ROOM_SPOTS = {
-    "1a": [
-      [15.8, 0, -21.2],
-      [18.2, 0, -22.2],
-      [17, 0, -19.9]
-    ],
-    "1b": [
-      [-19, 0, 18],
-      [-16.8, 0, 16.4],
-      [-14.5, 0, 18.2]
-    ],
-    "1c": [
-      [-2.4, 0, 28.1],
-      [2.4, 0, 28.1],
-      [0, 0, 26.3]
-    ],
-    "1d": [
-      [-3.4, 0, 17.4],
-      [2.4, 0, 18.6],
-      [0, 0, 15.2]
-    ],
-    "2a": [
-      [14.7, 0, 18],
-      [17.2, 0, 16.4],
-      [19.3, 0, 18.2]
-    ],
-    "2b": [
-      [-18.7, 0, -8.4],
-      [-15.8, 0, -10.2],
-      [-17, 0, -7]
-    ],
-    "2c": [
-      [15.5, 0, -8.4],
-      [18.3, 0, -10],
-      [17, 0, -7]
-    ],
-    "3a": [
-      [-19, 0, 4],
-      [-16.7, 0, 2.3],
-      [-14.6, 0, 4.5]
-    ],
-    "3b": [
-      [-19.4, 0, -22.4],
-      [-16.8, 0, -20.2],
-      [-14.8, 0, -23]
-    ],
-    "3d": [
-      [14.7, 0, 4],
-      [17, 0, 2.3],
-      [19.4, 0, 4.5]
-    ],
-    "2d": [
-      [-2, 0, 10.8],
-      [2, 0, 11],
-      [0, 0, 8.5]
-    ],
-    "1e": [
-      [-9, 0, 4.5],
-      [-9, 0, -2],
-      [-9, 0, -7]
-    ],
-    "2e": [
-      [9, 0, 4.5],
-      [9, 0, -2],
-      [9, 0, -7]
-    ],
-    "3e": [
-      [-10.7, 0, -3.6],
-      [-11.2, 0, -4.7],
-      [-10.4, 0, -5]
-    ],
-    "4e": [
-      [10.7, 0, -3.6],
-      [11.2, 0, -4.7],
-      [10.4, 0, -5]
-    ],
-    "2f": [
-      [-2.5, 0, -20.4],
-      [0, 0, -22],
-      [2.5, 0, -20.2]
-    ]
+  const state = {
+    screen: "title",
+    night: 1,
+    power: 100,
+    elapsed: 0,
+    startedAt: 0,
+    introEndsAt: 0,
+    powerOut: false,
+    blackoutEndsAt: 0,
+    monitorUp: false,
+    selectedCamera: "1a",
+    leftDoor: false,
+    rightDoor: false,
+    leftLight: false,
+    rightLight: false,
+    pan: 0,
+    panTarget: 0,
+    messageUntil: 0
   };
 
-  function makeTexture(
-    size,
-    paint,
-    repeatX = 1,
-    repeatY = 1
+  let enemies = [];
+  let lastFrame = performance.now();
+  let audioContext = null;
+
+  function material(
+    color,
+    options = {}
   ) {
-    const canvas =
-      document.createElement("canvas");
-
-    canvas.width = size;
-    canvas.height = size;
-
-    paint(
-      canvas.getContext("2d"),
-      size
-    );
-
-    const map =
-      new THREE.CanvasTexture(canvas);
-
-    map.colorSpace =
-      THREE.SRGBColorSpace;
-
-    map.wrapS =
-      THREE.RepeatWrapping;
-
-    map.wrapT =
-      THREE.RepeatWrapping;
-
-    map.repeat.set(
-      repeatX,
-      repeatY
-    );
-
-    map.anisotropy = 4;
-
-    return map;
+    return new THREE.MeshStandardMaterial({
+      color,
+      roughness: 0.7,
+      metalness: 0.04,
+      ...options
+    });
   }
 
-  function createMaterials() {
-    const tile =
-      makeTexture(
-        192,
-        (ctx, size) => {
-          ctx.fillStyle = "#aeb4b0";
-          ctx.fillRect(0, 0, size, size);
+  function canvasTexture(
+    width,
+    height,
+    paint
+  ) {
+    const textureCanvas =
+      document.createElement("canvas");
 
-          for (
-            let i = 0;
-            i < 900;
-            i++
-          ) {
-            const shade =
-              135 +
-              Math.random() * 45;
+    textureCanvas.width = width;
+    textureCanvas.height = height;
 
-            ctx.fillStyle =
-              `rgba(${shade},${shade + 5},${shade},.09)`;
+    const context =
+      textureCanvas.getContext("2d");
 
-            ctx.fillRect(
-              Math.random() * size,
-              Math.random() * size,
-              2,
-              2
-            );
-          }
+    paint(
+      context,
+      textureCanvas
+    );
 
-          ctx.strokeStyle =
-            "rgba(30,40,35,.42)";
-
-          ctx.lineWidth = 3;
-
-          ctx.strokeRect(
-            1.5,
-            1.5,
-            size - 3,
-            size - 3
-          );
-        },
-        14,
-        16
+    const texture =
+      new THREE.CanvasTexture(
+        textureCanvas
       );
 
-    const carpet =
-      makeTexture(
-        192,
-        (ctx, size) => {
-          ctx.fillStyle = "#183127";
-          ctx.fillRect(0, 0, size, size);
-
-          for (
-            let i = 0;
-            i < 3200;
-            i++
-          ) {
-            ctx.fillStyle =
-              Math.random() > 0.5
-                ? "rgba(130,160,142,.07)"
-                : "rgba(0,0,0,.09)";
-
-            ctx.fillRect(
-              Math.random() * size,
-              Math.random() * size,
-              1,
-              2
-            );
-          }
-        },
-        10,
-        10
-      );
-
-    const wood =
-      makeTexture(
-        192,
-        (ctx, size) => {
-          ctx.fillStyle = "#6f4930";
-          ctx.fillRect(0, 0, size, size);
-
-          for (
-            let y = 0;
-            y < size;
-            y += 8
-          ) {
-            ctx.strokeStyle =
-              `rgba(35,15,6,${0.08 + Math.random() * 0.1})`;
-
-            ctx.beginPath();
-            ctx.moveTo(0, y);
-
-            ctx.bezierCurveTo(
-              50,
-              y - 5,
-              120,
-              y + 7,
-              size,
-              y
-            );
-
-            ctx.stroke();
-          }
-        },
-        3,
-        3
-      );
-
-    function material(
-      color,
-      options = {}
-    ) {
-      return new THREE.MeshStandardMaterial({
-        color,
-        roughness: 0.7,
-        metalness: 0.04,
-        ...options
-      });
-    }
+    texture.colorSpace =
+      THREE.SRGBColorSpace;
 
     return {
-      floor: material(0xffffff, {
-        map: tile,
-        roughness: 0.8
-      }),
-
-      carpet: material(0xffffff, {
-        map: carpet,
-        roughness: 0.96
-      }),
-
-      wood: material(0xffffff, {
-        map: wood,
-        roughness: 0.5
-      }),
-
-      wall: material(0xdadbd4, {
-        roughness: 0.9
-      }),
-
-      ceiling: material(0xbfc4bf, {
-        roughness: 0.92
-      }),
-
-      dark: material(0x111512, {
-        roughness: 0.76
-      }),
-
-      green: material(0x155f3c),
-      blue: material(0x173d67),
-
-      white: material(0xf0f0e9, {
-        roughness: 0.46
-      }),
-
-      steel: material(0x737c7e, {
-        metalness: 0.82,
-        roughness: 0.22
-      }),
-
-      chrome: material(0xc6cecf, {
-        metalness: 0.95,
-        roughness: 0.1
-      }),
-
-      glass: material(0x96d9df, {
-        transparent: true,
-        opacity: 0.2,
-        depthWrite: false,
-        roughness: 0.08
-      }),
-
-      mirror: material(0xbde1e6, {
-        metalness: 0.85,
-        roughness: 0.04
-      }),
-
-      light: material(0xffffff, {
-        emissive: 0xffffff,
-        emissiveIntensity: 4
-      }),
-
-      screen: material(0x07120b, {
-        emissive: 0x31ff75,
-        emissiveIntensity: 2.3
-      }),
-
-      screenRed: material(0x1a0705, {
-        emissive: 0xff332b,
-        emissiveIntensity: 2.4
-      })
+      texture,
+      canvas: textureCanvas,
+      context
     };
   }
 
-  function createCameraSystem() {
-    const scene = new THREE.Scene();
+  function buildOffice() {
+    const scene =
+      new THREE.Scene();
 
     scene.background =
-      new THREE.Color(0x060807);
+      new THREE.Color(0x030504);
 
     scene.fog =
-      new THREE.Fog(
-        0x060807,
-        38,
-        82
+      new THREE.FogExp2(
+        0x020302,
+        0.028
       );
 
     const camera =
       new THREE.PerspectiveCamera(
-        72,
+        68,
         16 / 9,
         0.1,
-        150
+        80
       );
 
-    const materials =
-      createMaterials();
+    camera.position.set(
+      0,
+      3.25,
+      10
+    );
 
-    const figures =
-      new Map();
+    const mats = {
+      wall: material(0x777a74, {
+        roughness: 0.96
+      }),
 
-    const doorMeshes = {};
+      lowerWall: material(0x26352d, {
+        roughness: 0.88
+      }),
 
-    let selected =
-      CAMERA_DEFINITIONS[0];
+      floor: material(0x1b1d1b, {
+        roughness: 0.92
+      }),
+
+      ceiling: material(0x4f534f, {
+        roughness: 0.95
+      }),
+
+      wood: material(0x5d3925, {
+        roughness: 0.5
+      }),
+
+      woodTop: material(0x7d5436, {
+        roughness: 0.4
+      }),
+
+      dark: material(0x090c0a, {
+        roughness: 0.68
+      }),
+
+      black: material(0x020303, {
+        roughness: 0.8
+      }),
+
+      steel: material(0x71797a, {
+        metalness: 0.84,
+        roughness: 0.22
+      }),
+
+      chrome: material(0xbec7c8, {
+        metalness: 0.95,
+        roughness: 0.1
+      }),
+
+      paper: material(0xd9d8ca, {
+        roughness: 0.78
+      }),
+
+      red: material(0x6d1713, {
+        emissive: 0x350300,
+        emissiveIntensity: 0.4
+      }),
+
+      screen: material(0x06100a, {
+        emissive: 0x42f57b,
+        emissiveIntensity: 1.7
+      })
+    };
 
     function box(
       x,
@@ -472,7 +442,7 @@
       width,
       height,
       depth,
-      material,
+      boxMaterial,
       rotationY = 0,
       parent = scene
     ) {
@@ -483,7 +453,7 @@
             height,
             depth
           ),
-          material
+          boxMaterial
         );
 
       mesh.position.set(x, y, z);
@@ -502,7 +472,7 @@
       z,
       radius,
       depth,
-      material,
+      cylinderMaterial,
       rotationX = 0,
       rotationZ = 0,
       parent = scene,
@@ -516,7 +486,7 @@
             depth,
             segments
           ),
-          material
+          cylinderMaterial
         );
 
       mesh.position.set(x, y, z);
@@ -535,7 +505,7 @@
       y,
       z,
       radius,
-      material,
+      sphereMaterial,
       parent = scene
     ) {
       const mesh =
@@ -545,7 +515,7 @@
             18,
             12
           ),
-          material
+          sphereMaterial
         );
 
       mesh.position.set(x, y, z);
@@ -556,72 +526,25 @@
       return mesh;
     }
 
-    function sign(
-      text,
+    function texturedPlane(
       x,
       y,
       z,
+      width,
+      height,
+      texture,
       rotationY = 0,
-      width = 5,
-      background = "#113a28"
+      parent = scene
     ) {
-      const canvas =
-        document.createElement("canvas");
-
-      canvas.width = 1024;
-      canvas.height = 256;
-
-      const ctx =
-        canvas.getContext("2d");
-
-      ctx.fillStyle = background;
-
-      ctx.fillRect(
-        0,
-        0,
-        canvas.width,
-        canvas.height
-      );
-
-      let size = 104;
-
-      ctx.font =
-        `800 ${size}px Arial`;
-
-      while (
-        ctx.measureText(text).width > 900 &&
-        size > 38
-      ) {
-        size -= 4;
-        ctx.font =
-          `800 ${size}px Arial`;
-      }
-
-      ctx.fillStyle = "#eaffef";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-
-      ctx.fillText(
-        text,
-        512,
-        128
-      );
-
-      const map =
-        new THREE.CanvasTexture(canvas);
-
-      map.colorSpace =
-        THREE.SRGBColorSpace;
-
       const mesh =
         new THREE.Mesh(
           new THREE.PlaneGeometry(
             width,
-            width / 4
+            height
           ),
 
           new THREE.MeshBasicMaterial({
-            map,
+            map: texture,
             side: THREE.DoubleSide
           })
         );
@@ -629,91 +552,94 @@
       mesh.position.set(x, y, z);
       mesh.rotation.y = rotationY;
 
-      scene.add(mesh);
+      parent.add(mesh);
 
       return mesh;
     }
 
-    function ceilingLight(
-      x,
-      z,
-      width = 4
-    ) {
-      box(
-        x,
-        5.9,
-        z,
-        width,
-        0.08,
-        0.65,
-        materials.light
-      );
-    }
+    function screenTexture(seed) {
+      return canvasTexture(
+        512,
+        320,
+        (ctx, image) => {
+          ctx.fillStyle = "#031008";
 
-    function chair(
-      x,
-      z,
-      rotationY = 0
-    ) {
-      const group =
-        new THREE.Group();
-
-      group.position.set(x, 0, z);
-      group.rotation.y = rotationY;
-
-      scene.add(group);
-
-      box(
-        0,
-        0.55,
-        0,
-        1.05,
-        0.18,
-        1,
-        materials.blue,
-        0,
-        group
-      );
-
-      box(
-        0,
-        1.15,
-        -0.43,
-        1.05,
-        1.18,
-        0.15,
-        materials.blue,
-        0,
-        group
-      );
-
-      for (
-        const sideX of [-0.38, 0.38]
-      ) {
-        for (
-          const sideZ of [-0.34, 0.34]
-        ) {
-          cylinder(
-            sideX,
-            0.26,
-            sideZ,
-            0.05,
-            0.5,
-            materials.chrome,
+          ctx.fillRect(
             0,
             0,
-            group,
-            10
+            image.width,
+            image.height
+          );
+
+          ctx.strokeStyle =
+            "rgba(77,255,130,.25)";
+
+          ctx.lineWidth = 2;
+
+          for (
+            let x = 0;
+            x < image.width;
+            x += 42
+          ) {
+            ctx.beginPath();
+            ctx.moveTo(x, 0);
+            ctx.lineTo(
+              x,
+              image.height
+            );
+            ctx.stroke();
+          }
+
+          for (
+            let y = 0;
+            y < image.height;
+            y += 36
+          ) {
+            ctx.beginPath();
+            ctx.moveTo(0, y);
+            ctx.lineTo(
+              image.width,
+              y
+            );
+            ctx.stroke();
+          }
+
+          ctx.fillStyle = "#74ff9d";
+          ctx.font =
+            "bold 34px monospace";
+
+          ctx.fillText(
+            `CAM ${seed}`,
+            22,
+            48
+          );
+
+          ctx.font =
+            "22px monospace";
+
+          ctx.fillText(
+            "NEEGY NATIONAL BANK",
+            22,
+            292
+          );
+
+          ctx.strokeStyle = "#42db73";
+
+          ctx.strokeRect(
+            40 + seed * 13,
+            75,
+            180,
+            120
           );
         }
-      }
+      ).texture;
     }
 
-    function monitor(
+    function deskMonitor(
       x,
       y,
       z,
-      red = false,
+      screenId,
       rotationY = 0
     ) {
       const group =
@@ -728,741 +654,136 @@
         0,
         0,
         0,
-        1.1,
-        0.72,
-        0.12,
-        materials.dark,
+        1.75,
+        1.08,
+        0.18,
+        mats.dark,
         0,
         group
       );
 
-      box(
+      texturedPlane(
         0,
         0,
-        0.067,
-        0.92,
-        0.55,
-        0.025,
-        red
-          ? materials.screenRed
-          : materials.screen,
+        0.096,
+        1.48,
+        0.82,
+        screenTexture(screenId),
         0,
         group
       );
 
       cylinder(
         0,
-        -0.47,
+        -0.72,
         0,
-        0.05,
-        0.54,
-        materials.chrome,
+        0.06,
+        0.55,
+        mats.chrome,
         0,
         0,
         group,
-        10
+        12
       );
 
       box(
         0,
-        -0.75,
+        -1,
         0,
-        0.5,
-        0.06,
-        0.36,
-        materials.chrome,
+        0.7,
+        0.08,
+        0.45,
+        mats.chrome,
         0,
         group
       );
     }
 
-    function tellerRoom(
-      x,
-      z,
-      label
-    ) {
-      box(
-        x,
-        0.03,
-        z,
-        10.5,
-        0.08,
-        8,
-        materials.carpet
-      );
-
-      box(
-        x,
-        3,
-        z - 3.4,
-        10.5,
-        6,
-        0.3,
-        materials.wall
-      );
-
-      box(
-        x - 5.1,
-        3,
-        z,
-        0.3,
-        6,
-        7,
-        materials.wall
-      );
-
-      box(
-        x + 5.1,
-        3,
-        z,
-        0.3,
-        6,
-        7,
-        materials.wall
-      );
-
-      for (
-        let station = -1;
-        station <= 1;
-        station++
-      ) {
-        const stationX =
-          x + station * 2.8;
-
-        box(
-          stationX,
-          0.72,
-          z,
-          2.42,
-          1.44,
-          1.18,
-          materials.wood
-        );
-
-        box(
-          stationX,
-          1.47,
-          z + 0.02,
-          2.28,
-          0.12,
-          1.08,
-          materials.white
-        );
-
-        box(
-          stationX,
-          2.45,
-          z + 0.05,
-          0.06,
-          1.9,
-          1.85,
-          materials.glass
-        );
-
-        monitor(
-          stationX,
-          2.05,
-          z - 0.38,
-          station === 1
-        );
-
-        chair(
-          stationX,
-          z - 1.48,
-          Math.PI
-        );
-      }
-
-      sign(
-        label,
-        x,
-        4.68,
-        z - 3.2
-      );
-
-      ceilingLight(x, z - 1);
-      ceilingLight(x, z + 2);
-    }
-
-    function bathroom(
-      x,
-      z,
-      label,
-      mens
-    ) {
-      box(
-        x,
-        0.03,
-        z,
-        10,
-        0.08,
-        7.5,
-        materials.floor
-      );
-
-      box(
-        x,
-        3,
-        z - 3.5,
-        10,
-        6,
-        0.3,
-        materials.wall
-      );
-
-      box(
-        x - 4.8,
-        3,
-        z,
-        0.3,
-        6,
-        7,
-        materials.wall
-      );
-
-      box(
-        x + 4.8,
-        3,
-        z,
-        0.3,
-        6,
-        7,
-        materials.wall
-      );
-
-      for (
-        let stall = 0;
-        stall < 3;
-        stall++
-      ) {
-        const stallX =
-          x + 0.25 + stall * 1.45;
-
-        box(
-          stallX,
-          1.42,
-          z - 2.15,
-          1.13,
-          2.84,
-          0.11,
-          materials.dark
-        );
-
-        box(
-          stallX - 0.65,
-          1.4,
-          z - 1.48,
-          0.08,
-          2.8,
-          1.55,
-          materials.steel
-        );
-      }
-
-      box(
-        x - 2.75,
-        0.85,
-        z - 2.15,
-        2.7,
-        0.25,
-        1,
-        materials.white
-      );
-
-      box(
-        x - 2.75,
-        2.12,
-        z - 3.31,
-        2.85,
-        1.55,
-        0.06,
-        materials.mirror
-      );
-
-      if (mens) {
-        for (
-          let i = 0;
-          i < 3;
-          i++
-        ) {
-          box(
-            x - 3.7 + i * 1.05,
-            0.78,
-            z - 2.72,
-            0.63,
-            1.12,
-            0.42,
-            materials.white
-          );
-        }
-      }
-
-      sign(
-        label,
-        x,
-        4.72,
-        z - 3.3
-      );
-
-      ceilingLight(x, z);
-    }
-
-    function vault(x, z) {
-      box(
-        x,
-        0.03,
-        z,
-        11,
-        0.08,
-        10,
-        materials.floor
-      );
-
-      box(
-        x,
-        3,
-        z - 4.2,
-        11,
-        6,
-        0.35,
-        materials.dark
-      );
-
-      for (
-        let row = 0;
-        row < 5;
-        row++
-      ) {
-        for (
-          let column = 0;
-          column < 8;
-          column++
-        ) {
-          const depositX =
-            x - 4.1 +
-            column * 1.17;
-
-          box(
-            depositX,
-            0.55 + row * 0.82,
-            z - 3.92,
-            0.98,
-            0.68,
-            0.12,
-            materials.steel
-          );
-        }
-      }
-
-      cylinder(
-        x,
-        2.3,
-        z - 3.72,
-        2.35,
-        0.36,
-        materials.steel,
-        Math.PI / 2
-      );
-
-      cylinder(
-        x,
-        2.3,
-        z - 3.48,
-        0.72,
-        0.2,
-        materials.wood,
-        Math.PI / 2
-      );
-
-      for (
-        let angle = 0;
-        angle < Math.PI * 2;
-        angle += Math.PI / 3
-      ) {
-        const spoke =
-          box(
-            x +
-              Math.cos(angle) *
-                0.55,
-
-            2.3 +
-              Math.sin(angle) *
-                0.55,
-
-            z - 3.35,
-            0.08,
-            1.15,
-            0.08,
-            materials.chrome
-          );
-
-        spoke.rotation.z = -angle;
-      }
-
-      sign(
-        "BANK SAFE",
-        x,
-        5,
-        z - 4
-      );
-
-      ceilingLight(x, z - 1);
-    }
-
-    function stockRoom(x, z) {
-      box(
-        x,
-        0.03,
-        z,
-        11,
-        0.08,
-        10,
-        materials.carpet
-      );
-
-      box(
-        x,
-        3,
-        z - 4.2,
-        11,
-        6,
-        0.35,
-        materials.dark
-      );
-
-      sign(
-        "STOCK MARKET ROOM",
-        x,
-        5,
-        z - 4
-      );
-
-      for (
-        let row = 0;
-        row < 2;
-        row++
-      ) {
-        for (
-          let desk = 0;
-          desk < 4;
-          desk++
-        ) {
-          const deskX =
-            x - 3.75 +
-            desk * 2.45;
-
-          const deskZ =
-            z - 1.3 +
-            row * 2.5;
-
-          box(
-            deskX,
-            0.75,
-            deskZ,
-            2,
-            0.16,
-            1.15,
-            materials.wood
-          );
-
-          monitor(
-            deskX - 0.46,
-            1.54,
-            deskZ - 0.25,
-            (desk + row) % 2 === 0
-          );
-
-          monitor(
-            deskX + 0.46,
-            1.54,
-            deskZ - 0.25,
-            (desk + row) % 2 !== 0
-          );
-
-          chair(
-            deskX,
-            deskZ + 0.86
-          );
-        }
-      }
-
-      ceilingLight(x, z);
-    }
-
-    function hallway(x, label) {
-      box(
-        x,
-        0.04,
-        1,
-        4,
-        0.08,
-        22,
-        materials.carpet
-      );
-
-      box(
-        x - 2,
-        3,
-        1,
-        0.25,
-        6,
-        22,
-        materials.wall
-      );
-
-      box(
-        x + 2,
-        3,
-        1,
-        0.25,
-        6,
-        22,
-        materials.wall
-      );
-
-      for (
-        let hallZ = -6;
-        hallZ <= 6;
-        hallZ += 6
-      ) {
-        box(
-          x - 1.86,
-          2,
-          hallZ,
-          0.16,
-          4,
-          2.2,
-          materials.wood
-        );
-
-        box(
-          x + 1.86,
-          2,
-          hallZ + 2.6,
-          0.16,
-          4,
-          2.2,
-          materials.wood
-        );
-      }
-
-      sign(
-        label,
-        x,
-        4.5,
-        -9.84
-      );
-
-      ceilingLight(x, -5, 2.5);
-      ceilingLight(x, 1, 2.5);
-      ceilingLight(x, 7, 2.5);
-    }
-
-    function securityDoor(
-      side,
-      x,
-      z
-    ) {
-      const shutter =
-        new THREE.Group();
-
-      shutter.position.set(
-        x,
-        4.7,
-        z
-      );
-
-      scene.add(shutter);
-
-      for (
-        let panel = 0;
-        panel < 9;
-        panel++
-      ) {
-        box(
-          0,
-          0.28 + panel * 0.49,
-          0,
-          0.32,
-          0.43,
-          3.45,
-          panel % 2
-            ? materials.steel
-            : materials.chrome,
-          0,
-          shutter
-        );
-      }
-
-      box(
-        x,
-        4.45,
-        z,
-        0.72,
-        0.48,
-        4.15,
-        materials.dark
-      );
-
-      box(
-        x,
-        2.1,
-        z - 1.92,
-        0.7,
-        4.2,
-        0.36,
-        materials.dark
-      );
-
-      box(
-        x,
-        2.1,
-        z + 1.92,
-        0.7,
-        4.2,
-        0.36,
-        materials.dark
-      );
-
-      sign(
-        side === "left"
-          ? "LEFT SECURITY DOOR"
-          : "RIGHT SECURITY DOOR",
-        x,
-        4.75,
-        z,
-        side === "left"
-          ? -Math.PI / 2
-          : Math.PI / 2,
-        4.2,
-        "#421515"
-      );
-
-      doorMeshes[side] = {
-        shutter,
-        targetY: 4.7
-      };
-    }
-
-    function createStickFigure(
+    function officeStickFigure(
       color
     ) {
       const group =
         new THREE.Group();
 
       const figureMaterial =
-        new THREE.MeshStandardMaterial({
-          color,
-          roughness: 0.45,
-          metalness: 0.05
-        });
-
-      const jointMaterial =
-        new THREE.MeshStandardMaterial({
-          color: 0x0a0d0b,
-          roughness: 0.8
+        material(color, {
+          roughness: 0.45
         });
 
       sphere(
         0,
-        2.52,
+        2.55,
         0,
-        0.35,
+        0.38,
         figureMaterial,
         group
       );
 
-      const body =
-        cylinder(
-          0,
-          1.65,
-          0,
-          0.13,
-          1.42,
-          figureMaterial,
-          0,
-          0,
-          group,
-          12
-        );
-
-      const leftArm =
-        cylinder(
-          -0.36,
-          1.68,
-          0,
-          0.075,
-          1.08,
-          figureMaterial,
-          0,
-          -0.48,
-          group,
-          10
-        );
-
-      const rightArm =
-        cylinder(
-          0.36,
-          1.68,
-          0,
-          0.075,
-          1.08,
-          figureMaterial,
-          0,
-          0.48,
-          group,
-          10
-        );
-
-      const leftLeg =
-        cylinder(
-          -0.2,
-          0.58,
-          0,
-          0.09,
-          1.22,
-          figureMaterial,
-          0,
-          -0.19,
-          group,
-          10
-        );
-
-      const rightLeg =
-        cylinder(
-          0.2,
-          0.58,
-          0,
-          0.09,
-          1.22,
-          figureMaterial,
-          0,
-          0.19,
-          group,
-          10
-        );
-
-      sphere(
+      cylinder(
         0,
-        2.52,
-        -0.3,
-        0.07,
-        jointMaterial,
-        group
+        1.64,
+        0,
+        0.14,
+        1.48,
+        figureMaterial,
+        0,
+        0,
+        group,
+        12
       );
 
-      group.userData.parts = {
-        body,
-        leftArm,
-        rightArm,
-        leftLeg,
-        rightLeg
-      };
+      cylinder(
+        -0.38,
+        1.7,
+        0,
+        0.08,
+        1.15,
+        figureMaterial,
+        0,
+        -0.5,
+        group,
+        10
+      );
 
-      group.userData.goal =
-        new THREE.Vector3();
+      cylinder(
+        0.38,
+        1.7,
+        0,
+        0.08,
+        1.15,
+        figureMaterial,
+        0,
+        0.5,
+        group,
+        10
+      );
 
-      group.userData.room = "";
+      cylinder(
+        -0.2,
+        0.58,
+        0,
+        0.1,
+        1.25,
+        figureMaterial,
+        0,
+        -0.18,
+        group,
+        10
+      );
+
+      cylinder(
+        0.2,
+        0.58,
+        0,
+        0.1,
+        1.25,
+        figureMaterial,
+        0,
+        0.18,
+        group,
+        10
+      );
+
       group.visible = false;
 
       scene.add(group);
@@ -1470,573 +791,2279 @@
       return group;
     }
 
+    function createDoor(
+      side,
+      x
+    ) {
+      const shutter =
+        new THREE.Group();
+
+      shutter.position.set(
+        x,
+        5.4,
+        -3.2
+      );
+
+      scene.add(shutter);
+
+      for (
+        let panel = 0;
+        panel < 10;
+        panel++
+      ) {
+        box(
+          0,
+          0.27 + panel * 0.48,
+          0,
+          0.42,
+          0.42,
+          4.25,
+          panel % 2
+            ? mats.steel
+            : mats.chrome,
+          0,
+          shutter
+        );
+      }
+
+      box(
+        x,
+        5.2,
+        -3.2,
+        0.7,
+        0.55,
+        4.9,
+        mats.dark
+      );
+
+      box(
+        x,
+        2.45,
+        -5.48,
+        0.65,
+        4.9,
+        0.42,
+        mats.dark
+      );
+
+      box(
+        x,
+        2.45,
+        -0.92,
+        0.65,
+        4.9,
+        0.42,
+        mats.dark
+      );
+
+      box(
+        x +
+          (
+            side === "left"
+              ? 0.38
+              : -0.38
+          ),
+        2.2,
+        -0.45,
+        0.2,
+        1.1,
+        0.65,
+        mats.dark
+      );
+
+      return {
+        shutter,
+        targetY: 5.4
+      };
+    }
+
     /*
-     * THE ENTIRE BANK CAMERA WORLD
-     * IS BUILT IN THIS JS FILE.
+     * OFFICE SHELL
      */
 
     box(
       0,
-      -0.16,
-      0,
-      52,
+      -0.15,
+      -1,
+      18,
       0.3,
-      60,
-      materials.floor
+      19,
+      mats.floor
     );
 
     box(
       0,
-      6.08,
+      6,
+      -1,
+      18,
+      0.25,
+      19,
+      mats.ceiling
+    );
+
+    box(
       0,
-      52,
+      3,
+      -9.3,
+      18,
+      6,
+      0.35,
+      mats.wall
+    );
+
+    box(
+      -8.8,
+      3,
+      -7.2,
+      0.35,
+      6,
+      4.2,
+      mats.wall
+    );
+
+    box(
+      -8.8,
+      3,
+      1.6,
+      0.35,
+      6,
+      4.1,
+      mats.wall
+    );
+
+    box(
+      8.8,
+      3,
+      -7.2,
+      0.35,
+      6,
+      4.2,
+      mats.wall
+    );
+
+    box(
+      8.8,
+      3,
+      1.6,
+      0.35,
+      6,
+      4.1,
+      mats.wall
+    );
+
+    box(
+      0,
+      1.15,
+      -9.08,
+      17.5,
+      2.3,
+      0.08,
+      mats.lowerWall
+    );
+
+    /*
+     * DARK HALLWAYS
+     */
+
+    box(
+      -10.8,
+      0,
+      -3.2,
+      4,
+      0.12,
+      4.7,
+      mats.black
+    );
+
+    box(
+      10.8,
+      0,
+      -3.2,
+      4,
+      0.12,
+      4.7,
+      mats.black
+    );
+
+    box(
+      -11.8,
+      3,
+      -3.2,
       0.2,
-      60,
-      materials.ceiling
+      6,
+      4.7,
+      mats.black
     );
 
     box(
-      -26,
+      11.8,
       3,
-      0,
-      0.4,
+      -3.2,
+      0.2,
       6,
-      60,
-      materials.wall
+      4.7,
+      mats.black
     );
 
-    box(
-      26,
-      3,
-      0,
-      0.4,
-      6,
-      60,
-      materials.wall
-    );
+    /*
+     * OFFICE DESK
+     */
 
     box(
       0,
-      3,
-      -30,
-      52,
-      6,
-      0.4,
-      materials.wall
-    );
-
-    box(
-      -15,
-      3,
-      30,
-      22,
-      6,
-      0.4,
-      materials.wall
-    );
-
-    box(
-      15,
-      3,
-      30,
-      22,
-      6,
-      0.4,
-      materials.wall
+      1.05,
+      2.2,
+      9.2,
+      1.8,
+      2.35,
+      mats.wood
     );
 
     box(
       0,
-      5.25,
-      30,
-      8,
-      1.5,
-      0.4,
-      materials.wall
+      2,
+      2.2,
+      9.35,
+      0.14,
+      2.5,
+      mats.woodTop
     );
 
     box(
-      -2.05,
+      -3.65,
+      0.65,
+      2.22,
+      1.3,
+      1.25,
+      1.9,
+      mats.wood
+    );
+
+    box(
+      3.65,
+      0.65,
+      2.22,
+      1.3,
+      1.25,
+      1.9,
+      mats.wood
+    );
+
+    deskMonitor(
+      -2.25,
+      3.02,
+      1.45,
+      1,
+      0.08
+    );
+
+    deskMonitor(
+      0,
+      3.15,
+      1.28,
+      2
+    );
+
+    deskMonitor(
+      2.25,
+      3.02,
+      1.45,
+      3,
+      -0.08
+    );
+
+    /*
+     * KEYBOARD
+     */
+
+    box(
+      0,
+      2.13,
+      3.08,
       2.15,
-      29.85,
-      3.8,
-      4.3,
       0.12,
-      materials.glass
-    );
-
-    box(
-      2.05,
-      2.15,
-      29.85,
-      3.8,
-      4.3,
-      0.12,
-      materials.glass
-    );
-
-    box(
-      0,
-      2.15,
-      29.72,
-      0.16,
-      4.3,
-      0.22,
-      materials.steel
-    );
-
-    sign(
-      "NEEGY NATIONAL BANK",
-      0,
-      5.15,
-      29.7,
-      Math.PI,
-      8
+      0.72,
+      mats.dark
     );
 
     for (
-      const atmX of [-6.1, 6.1]
+      let row = 0;
+      row < 4;
+      row++
     ) {
-      box(
-        atmX,
-        1.55,
-        28.9,
-        2.05,
-        3.1,
-        0.7,
-        materials.dark
-      );
-
-      monitor(
-        atmX,
-        2.05,
-        28.5,
-        false,
-        Math.PI
-      );
+      for (
+        let key = 0;
+        key < 10;
+        key++
+      ) {
+        box(
+          -0.85 + key * 0.19,
+          2.205,
+          2.82 + row * 0.14,
+          0.13,
+          0.025,
+          0.08,
+          mats.chrome
+        );
+      }
     }
 
-    box(
-      0,
-      0.05,
-      18,
-      18,
-      0.1,
-      12,
-      materials.carpet
-    );
-
-    sign(
-      "MAIN ROOM",
-      0,
-      4.8,
-      12.2
-    );
-
-    chair(-3.2, 18);
-    chair(-1.5, 18);
-    chair(1.5, 18, Math.PI);
-    chair(3.2, 18, Math.PI);
+    /*
+     * PAPERS
+     */
 
     box(
-      0,
-      0.8,
-      10,
-      7,
-      1.6,
-      1.5,
-      materials.wood
+      -3.3,
+      2.12,
+      2.7,
+      1.45,
+      0.035,
+      0.95,
+      mats.paper,
+      -0.08
     );
 
     box(
-      0,
-      1.65,
-      10.1,
-      6.8,
-      0.12,
+      -3.1,
+      2.17,
+      2.82,
       1.35,
-      materials.white
+      0.035,
+      0.85,
+      mats.paper,
+      0.06
     );
 
-    monitor(
-      -1.5,
-      2.18,
-      9.65
+    /*
+     * PHONE
+     */
+
+    box(
+      3.4,
+      2.2,
+      2.7,
+      0.62,
+      0.2,
+      1.08,
+      mats.dark,
+      -0.15
     );
 
-    monitor(
-      1.5,
-      2.18,
-      9.65,
-      true
+    box(
+      3.4,
+      2.32,
+      2.52,
+      0.45,
+      0.08,
+      0.55,
+      mats.red,
+      -0.15
     );
 
-    sign(
-      "MAIN DESK",
+    /*
+     * MUG
+     */
+
+    cylinder(
+      2.8,
+      2.43,
+      3.25,
+      0.32,
+      0.62,
+      mats.paper,
       0,
-      1,
-      10.78,
-      Math.PI,
-      4.6
-    );
-
-    tellerRoom(
-      -17,
-      18,
-      "TELLER ROOM 1"
-    );
-
-    tellerRoom(
-      17,
-      18,
-      "TELLER ROOM 2"
-    );
-
-    tellerRoom(
-      -17,
-      4,
-      "TELLER ROOM 3"
-    );
-
-    tellerRoom(
-      17,
-      4,
-      "TELLER ROOM 4"
-    );
-
-    tellerRoom(
       0,
-      -20,
-      "TELLER ROOM 5"
+      scene,
+      20
     );
 
-    bathroom(
-      -17,
-      -9,
-      "MEN'S BATHROOM",
-      true
+    /*
+     * BANK LOGO PICTURE
+     */
+
+    const bankLogo =
+      canvasTexture(
+        512,
+        512,
+        (ctx, image) => {
+          ctx.fillStyle = "#07140c";
+
+          ctx.fillRect(
+            0,
+            0,
+            image.width,
+            image.height
+          );
+
+          ctx.fillStyle = "#d3b657";
+
+          ctx.beginPath();
+
+          ctx.arc(
+            256,
+            205,
+            135,
+            0,
+            Math.PI * 2
+          );
+
+          ctx.fill();
+
+          ctx.fillStyle = "#123a24";
+          ctx.font = "bold 210px Georgia";
+          ctx.textAlign = "center";
+
+          ctx.fillText(
+            "N",
+            256,
+            275
+          );
+
+          ctx.fillStyle = "#f4e8b0";
+          ctx.font = "bold 38px Arial";
+
+          ctx.fillText(
+            "NEEGY NATIONAL",
+            256,
+            405
+          );
+
+          ctx.font = "30px Arial";
+
+          ctx.fillText(
+            "BANK",
+            256,
+            452
+          );
+        }
+      ).texture;
+
+    box(
+      -4.1,
+      3.05,
+      1.45,
+      1.75,
+      1.7,
+      0.16,
+      mats.wood,
+      0.1
     );
 
-    bathroom(
-      17,
-      -9,
-      "WOMEN'S BATHROOM",
-      false
+    texturedPlane(
+      -4.1,
+      3.05,
+      1.355,
+      1.48,
+      1.43,
+      bankLogo,
+      Math.PI + 0.1
     );
 
-    vault(17, -23);
-    stockRoom(-17, -23);
+    /*
+     * DIGITAL CLOCK
+     */
 
-    hallway(
-      -9,
-      "LEFT HALLWAY"
+    const clockSurface =
+      canvasTexture(
+        512,
+        190,
+        (ctx, image) => {
+          ctx.fillStyle = "#050505";
+
+          ctx.fillRect(
+            0,
+            0,
+            image.width,
+            image.height
+          );
+
+          ctx.fillStyle = "#ff3a30";
+          ctx.textAlign = "center";
+          ctx.font = "bold 120px monospace";
+
+          ctx.fillText(
+            "12:00",
+            256,
+            135
+          );
+        }
+      );
+
+    box(
+      0,
+      4.65,
+      -9.03,
+      3.25,
+      1.3,
+      0.22,
+      mats.dark
     );
 
-    hallway(
-      9,
-      "RIGHT HALLWAY"
+    texturedPlane(
+      0,
+      4.65,
+      -8.905,
+      2.9,
+      1.05,
+      clockSurface.texture
     );
 
-    securityDoor(
-      "left",
-      -11,
-      -4
+    /*
+     * DESK FAN
+     */
+
+    const fan =
+      new THREE.Group();
+
+    fan.position.set(
+      4.15,
+      2.2,
+      1.35
     );
 
-    securityDoor(
-      "right",
-      11,
-      -4
+    scene.add(fan);
+
+    cylinder(
+      0,
+      0.35,
+      0,
+      0.08,
+      0.7,
+      mats.chrome,
+      0,
+      0,
+      fan,
+      12
+    );
+
+    cylinder(
+      0,
+      0.72,
+      0,
+      0.48,
+      0.08,
+      mats.dark,
+      Math.PI / 2,
+      0,
+      fan,
+      20
+    );
+
+    const blades =
+      new THREE.Group();
+
+    blades.position.set(
+      0,
+      0.72,
+      0.08
+    );
+
+    fan.add(blades);
+
+    for (
+      let blade = 0;
+      blade < 4;
+      blade++
+    ) {
+      const fanBlade =
+        box(
+          0,
+          0.42,
+          0,
+          0.18,
+          0.72,
+          0.045,
+          mats.steel,
+          0,
+          blades
+        );
+
+      fanBlade.rotation.z =
+        blade * Math.PI / 2;
+    }
+
+    sphere(
+      0,
+      0.72,
+      0.12,
+      0.11,
+      mats.chrome,
+      fan
+    );
+
+    /*
+     * LIGHTING
+     */
+
+    box(
+      0,
+      5.82,
+      -2.5,
+      4.5,
+      0.08,
+      0.72,
+
+      material(0xffffff, {
+        emissive: 0xffffff,
+        emissiveIntensity: 3.3
+      })
+    );
+
+    const officeAmbient =
+      new THREE.HemisphereLight(
+        0xcde0d2,
+        0x07100a,
+        1.05
+      );
+
+    scene.add(officeAmbient);
+
+    const officeLight =
+      new THREE.PointLight(
+        0xdfffe8,
+        42,
+        22
+      );
+
+    officeLight.position.set(
+      0,
+      5.35,
+      -1.5
+    );
+
+    officeLight.castShadow = true;
+
+    scene.add(officeLight);
+
+    const leftLight =
+      new THREE.SpotLight(
+        0xfff1bf,
+        0,
+        25,
+        Math.PI / 3.4,
+        0.55,
+        1.2
+      );
+
+    leftLight.position.set(
+      -7.4,
+      4.5,
+      -1.2
+    );
+
+    leftLight.target.position.set(
+      -9.8,
+      1.2,
+      -3.2
     );
 
     scene.add(
-      new THREE.HemisphereLight(
-        0xeafff2,
-        0x142018,
-        2
-      )
+      leftLight,
+      leftLight.target
     );
 
-    const sun =
-      new THREE.DirectionalLight(
-        0xfff5df,
-        2.2
+    const rightLight =
+      new THREE.SpotLight(
+        0xfff1bf,
+        0,
+        25,
+        Math.PI / 3.4,
+        0.55,
+        1.2
       );
 
-    sun.position.set(14, 20, 18);
-    sun.castShadow = true;
-
-    sun.shadow.mapSize.set(
-      1024,
-      1024
+    rightLight.position.set(
+      7.4,
+      4.5,
+      -1.2
     );
 
-    sun.shadow.camera.left = -35;
-    sun.shadow.camera.right = 35;
-    sun.shadow.camera.top = 35;
-    sun.shadow.camera.bottom = -35;
+    rightLight.target.position.set(
+      9.8,
+      1.2,
+      -3.2
+    );
 
-    scene.add(sun);
+    scene.add(
+      rightLight,
+      rightLight.target
+    );
 
-    const lobbyLight =
-      new THREE.PointLight(
-        0xd8ffe6,
-        65,
-        38
+    const leftDoor =
+      createDoor(
+        "left",
+        -8.45
       );
 
-    lobbyLight.position.set(
+    const rightDoor =
+      createDoor(
+        "right",
+        8.45
+      );
+
+    const leftFigure =
+      officeStickFigure(
+        0x101310
+      );
+
+    leftFigure.position.set(
+      -9.4,
       0,
-      5.2,
-      14
+      -3.2
     );
 
-    scene.add(lobbyLight);
+    leftFigure.rotation.y =
+      Math.PI / 2;
 
-    const rearLight =
-      new THREE.PointLight(
-        0xd9e8ff,
-        55,
-        34
+    const rightFigure =
+      officeStickFigure(
+        0x101310
       );
 
-    rearLight.position.set(
+    rightFigure.position.set(
+      9.4,
       0,
-      5.2,
-      -19
+      -3.2
     );
 
-    scene.add(rearLight);
+    rightFigure.rotation.y =
+      -Math.PI / 2;
 
-    function show(id) {
-      const found =
-        CAMERA_DEFINITIONS.find(
-          cameraData =>
-            cameraData.id ===
-            String(id).toLowerCase()
-        );
+    function setClock(text) {
+      const ctx =
+        clockSurface.context;
 
-      if (!found) {
-        return false;
-      }
+      ctx.fillStyle = "#050505";
 
-      selected = found;
-
-      camera.position.set(
-        ...found.position
+      ctx.fillRect(
+        0,
+        0,
+        clockSurface.canvas.width,
+        clockSurface.canvas.height
       );
 
-      camera.lookAt(
-        ...found.target
+      ctx.fillStyle = "#ff3a30";
+      ctx.textAlign = "center";
+      ctx.font = "bold 120px monospace";
+
+      ctx.fillText(
+        text.replace(
+          " AM",
+          ":00"
+        ),
+        256,
+        135
       );
 
-      return true;
-    }
-
-    function setDoorState(
-      side,
-      closed
-    ) {
-      const door =
-        doorMeshes[side];
-
-      if (!door) {
-        return;
-      }
-
-      door.targetY =
-        closed ? 0 : 4.7;
-    }
-
-    function syncEnemies(enemies) {
-      const livingIds =
-        new Set(
-          enemies.map(
-            enemy => enemy.id
-          )
-        );
-
-      for (
-        const [id, figure]
-        of figures
-      ) {
-        if (!livingIds.has(id)) {
-          figure.visible = false;
-        }
-      }
-
-      enemies.forEach(
-        (enemy, index) => {
-          let figure =
-            figures.get(enemy.id);
-
-          if (!figure) {
-            figure =
-              createStickFigure(
-                enemy.color ||
-                  0x83ff9c
-              );
-
-            figures.set(
-              enemy.id,
-              figure
-            );
-          }
-
-          if (
-            enemy.insideOffice ||
-            !ROOM_SPOTS[enemy.camera]
-          ) {
-            figure.visible = false;
-            return;
-          }
-
-          figure.visible = true;
-
-          const spots =
-            ROOM_SPOTS[enemy.camera];
-
-          const target =
-            spots[
-              index % spots.length
-            ];
-
-          const goal =
-            figure.userData.goal;
-
-          if (
-            figure.userData.room !==
-            enemy.camera
-          ) {
-            figure.userData.room =
-              enemy.camera;
-
-            figure.position.set(
-              target[0] +
-                (
-                  index % 2
-                    ? -1.5
-                    : 1.5
-                ),
-              target[1],
-              target[2] + 1.8
-            );
-
-            goal.set(
-              target[0],
-              target[1],
-              target[2]
-            );
-          } else {
-            goal.set(
-              target[0],
-              target[1],
-              target[2]
-            );
-          }
-        }
-      );
+      clockSurface.texture.needsUpdate =
+        true;
     }
 
     function update(
       delta,
-      elapsed,
-      enemies
+      elapsed
     ) {
-      syncEnemies(enemies);
+      const leftTarget =
+        state.leftDoor
+          ? 0
+          : 5.4;
 
-      for (
-        const door
-        of Object.values(
-          doorMeshes
-        )
-      ) {
-        door.shutter.position.y +=
-          (
-            door.targetY -
-            door.shutter.position.y
-          ) *
-          Math.min(
-            1,
-            delta * 9
-          );
-      }
+      const rightTarget =
+        state.rightDoor
+          ? 0
+          : 5.4;
 
-      for (
-        const figure
-        of figures.values()
-      ) {
-        if (!figure.visible) {
-          continue;
-        }
-
-        const walking =
-          figure.position
-            .distanceToSquared(
-              figure.userData.goal
-            ) > 0.006;
-
-        figure.position.lerp(
-          figure.userData.goal,
-          Math.min(
-            1,
-            delta * 2.5
-          )
+      leftDoor.shutter.position.y +=
+        (
+          leftTarget -
+          leftDoor.shutter.position.y
+        ) *
+        Math.min(
+          1,
+          delta * 9
         );
 
-        const swing =
-          walking
-            ? Math.sin(
-                elapsed * 10
-              ) * 0.28
-            : 0;
+      rightDoor.shutter.position.y +=
+        (
+          rightTarget -
+          rightDoor.shutter.position.y
+        ) *
+        Math.min(
+          1,
+          delta * 9
+        );
 
-        const parts =
-          figure.userData.parts;
+      leftLight.intensity +=
+        (
+          (
+            state.leftLight &&
+            !state.powerOut
+              ? 90
+              : 0
+          ) -
+          leftLight.intensity
+        ) *
+        Math.min(
+          1,
+          delta * 13
+        );
 
-        parts.leftArm.rotation.z =
-          -0.48 + swing;
+      rightLight.intensity +=
+        (
+          (
+            state.rightLight &&
+            !state.powerOut
+              ? 90
+              : 0
+          ) -
+          rightLight.intensity
+        ) *
+        Math.min(
+          1,
+          delta * 13
+        );
 
-        parts.rightArm.rotation.z =
-          0.48 - swing;
+      officeAmbient.intensity +=
+        (
+          (
+            state.powerOut
+              ? 0.03
+              : 1.05
+          ) -
+          officeAmbient.intensity
+        ) *
+        Math.min(
+          1,
+          delta * 2.4
+        );
 
-        parts.leftLeg.rotation.z =
-          -0.19 - swing * 0.7;
+      officeLight.intensity +=
+        (
+          (
+            state.powerOut
+              ? 0
+              : 42
+          ) -
+          officeLight.intensity
+        ) *
+        Math.min(
+          1,
+          delta * 2.4
+        );
 
-        parts.rightLeg.rotation.z =
-          0.19 + swing * 0.7;
+      blades.rotation.z -=
+        delta * 8;
 
-        figure.rotation.y =
-          Math.sin(
-            elapsed * 0.7 +
-            figure.id
-          ) * 0.05;
+      const leftThreat =
+        enemies.find(
+          enemy =>
+            enemy.camera === "3e" &&
+            !enemy.insideOffice
+        );
+
+      const rightThreat =
+        enemies.find(
+          enemy =>
+            enemy.camera === "4e" &&
+            !enemy.insideOffice
+        );
+
+      leftFigure.visible =
+        Boolean(
+          leftThreat &&
+          state.leftLight &&
+          !state.monitorUp
+        );
+
+      rightFigure.visible =
+        Boolean(
+          rightThreat &&
+          state.rightLight &&
+          !state.monitorUp
+        );
+
+      if (leftThreat) {
+        leftFigure.traverse(
+          child => {
+            if (child.material) {
+              child.material.color.setHex(
+                leftThreat.color
+              );
+            }
+          }
+        );
       }
-    }
 
-    show("1a");
+      if (rightThreat) {
+        rightFigure.traverse(
+          child => {
+            if (child.material) {
+              child.material.color.setHex(
+                rightThreat.color
+              );
+            }
+          }
+        );
+      }
+
+      state.pan +=
+        (
+          state.panTarget -
+          state.pan
+        ) *
+        Math.min(
+          1,
+          delta * 3.2
+        );
+
+      camera.position.x =
+        state.pan * 1.2;
+
+      camera.lookAt(
+        state.pan * 4.4,
+        2.25,
+        -3.4
+      );
+    }
 
     return {
       scene,
       camera,
-      cameras: CAMERA_DEFINITIONS,
-      show,
       update,
-      setDoorState,
-
-      getCurrent() {
-        return {
-          ...selected
-        };
-      }
+      setClock
     };
   }
 
-  window.NeegyCameras = {
-    definitions:
-      CAMERA_DEFINITIONS,
+  const office =
+    buildOffice();
 
-    create:
-      createCameraSystem
+  function enableAudio() {
+    if (!audioContext) {
+      const AudioContextClass =
+        window.AudioContext ||
+        window.webkitAudioContext;
+
+      if (AudioContextClass) {
+        audioContext =
+          new AudioContextClass();
+      }
+    }
+
+    if (
+      audioContext?.state ===
+      "suspended"
+    ) {
+      audioContext.resume();
+    }
+  }
+
+  function tone(
+    frequency,
+    duration = 0.08,
+    volume = 0.035,
+    type = "square"
+  ) {
+    if (!audioContext) {
+      return;
+    }
+
+    const oscillator =
+      audioContext.createOscillator();
+
+    const gain =
+      audioContext.createGain();
+
+    oscillator.frequency.value =
+      frequency;
+
+    oscillator.type = type;
+
+    gain.gain.setValueAtTime(
+      volume,
+      audioContext.currentTime
+    );
+
+    gain.gain.exponentialRampToValueAtTime(
+      0.0001,
+      audioContext.currentTime +
+        duration
+    );
+
+    oscillator.connect(gain);
+    gain.connect(
+      audioContext.destination
+    );
+
+    oscillator.start();
+
+    oscillator.stop(
+      audioContext.currentTime +
+        duration
+    );
+  }
+
+  function staticBurst(
+    duration = 0.1,
+    volume = 0.025
+  ) {
+    if (!audioContext) {
+      return;
+    }
+
+    const samples =
+      Math.floor(
+        audioContext.sampleRate *
+        duration
+      );
+
+    const buffer =
+      audioContext.createBuffer(
+        1,
+        samples,
+        audioContext.sampleRate
+      );
+
+    const channel =
+      buffer.getChannelData(0);
+
+    for (
+      let i = 0;
+      i < samples;
+      i++
+    ) {
+      channel[i] =
+        Math.random() * 2 - 1;
+    }
+
+    const source =
+      audioContext.createBufferSource();
+
+    const gain =
+      audioContext.createGain();
+
+    source.buffer = buffer;
+    gain.gain.value = volume;
+
+    source.connect(gain);
+
+    gain.connect(
+      audioContext.destination
+    );
+
+    source.start();
+  }
+
+  function createEnemies(now) {
+    enemies =
+      ENEMY_CONFIGS.map(
+        config => ({
+          ...config,
+
+          camera:
+            config.start,
+
+          routeIndex: 0,
+
+          nextMove:
+            now +
+            (
+              config.interval +
+              Math.random() * 4
+            ) *
+            1000,
+
+          insideOffice: false,
+          attackAt: 0
+        })
+      );
+  }
+
+  function doorClosed(side) {
+    return side === "left"
+      ? state.leftDoor
+      : state.rightDoor;
+  }
+
+  function showMessage(
+    text,
+    seconds = 1.5
+  ) {
+    message.textContent = text;
+
+    message.classList.remove(
+      "hidden"
+    );
+
+    state.messageUntil =
+      performance.now() +
+      seconds * 1000;
+  }
+
+  function moveEnemy(
+    enemy,
+    now
+  ) {
+    if (enemy.insideOffice) {
+      return;
+    }
+
+    const level =
+      enemy.ai[
+        Math.min(
+          enemy.ai.length - 1,
+          state.night - 1
+        )
+      ] || 0;
+
+    const moveChance =
+      0.3 + level * 0.032;
+
+    enemy.nextMove =
+      now +
+      (
+        enemy.interval +
+        Math.random() * 4.5
+      ) *
+      1000;
+
+    if (
+      Math.random() >
+      moveChance
+    ) {
+      return;
+    }
+
+    if (
+      enemy.routeIndex ===
+      enemy.route.length - 1
+    ) {
+      if (
+        doorClosed(enemy.side)
+      ) {
+        enemy.routeIndex =
+          Math.max(
+            0,
+            enemy.routeIndex - 2
+          );
+
+        enemy.camera =
+          enemy.route[
+            enemy.routeIndex
+          ];
+
+        enemy.nextMove += 3500;
+
+        tone(
+          75,
+          0.16,
+          0.035,
+          "sawtooth"
+        );
+
+        return;
+      }
+
+      enemy.insideOffice = true;
+
+      enemy.attackAt =
+        now +
+        1500 +
+        Math.random() * 1800;
+
+      showMessage(
+        "MOVEMENT INSIDE OFFICE",
+        1.1
+      );
+
+      return;
+    }
+
+    if (
+      enemy.routeIndex > 0 &&
+      Math.random() <
+        enemy.backtrack
+    ) {
+      enemy.routeIndex--;
+    } else {
+      enemy.routeIndex++;
+    }
+
+    enemy.camera =
+      enemy.route[
+        enemy.routeIndex
+      ];
+
+    if (
+      state.monitorUp &&
+      enemy.camera ===
+        state.selectedCamera
+    ) {
+      switchStatic();
+    }
+  }
+
+  function updateEnemies(now) {
+    for (const enemy of enemies) {
+      if (
+        !enemy.insideOffice &&
+        now >= enemy.nextMove
+      ) {
+        moveEnemy(
+          enemy,
+          now
+        );
+      }
+
+      if (
+        enemy.insideOffice &&
+        now >= enemy.attackAt
+      ) {
+        loseNight(enemy.name);
+      }
+    }
+  }
+
+  function startNight() {
+    enableAudio();
+
+    const now =
+      performance.now();
+
+    state.screen = "intro";
+    state.power = 100;
+    state.elapsed = 0;
+    state.powerOut = false;
+    state.monitorUp = false;
+    state.leftDoor = false;
+    state.rightDoor = false;
+    state.leftLight = false;
+    state.rightLight = false;
+    state.selectedCamera = "1a";
+
+    state.introEndsAt =
+      now + 2500;
+
+    introNight.textContent =
+      `NIGHT ${state.night}`;
+
+    titleScreen.classList.add(
+      "hidden"
+    );
+
+    resultScreen.classList.add(
+      "hidden"
+    );
+
+    nightIntro.classList.remove(
+      "hidden"
+    );
+
+    hud.classList.add("hidden");
+
+    officeControls.classList.add(
+      "hidden"
+    );
+
+    monitorButton.classList.add(
+      "hidden"
+    );
+
+    createEnemies(now);
+    setMonitor(false, true);
+
+    staticBurst(
+      0.12,
+      0.03
+    );
+  }
+
+  function beginOffice(now) {
+    state.screen = "playing";
+    state.startedAt = now;
+
+    nightIntro.classList.add(
+      "hidden"
+    );
+
+    hud.classList.remove(
+      "hidden"
+    );
+
+    officeControls.classList.remove(
+      "hidden"
+    );
+
+    monitorButton.classList.remove(
+      "hidden"
+    );
+
+    updateUI();
+  }
+
+  function setMonitor(
+    open,
+    silent = false
+  ) {
+    if (
+      state.powerOut &&
+      open
+    ) {
+      return;
+    }
+
+    state.monitorUp = open;
+
+    gameShell.classList.toggle(
+      "monitor-open",
+      open
+    );
+
+    cameraInterface.classList.toggle(
+      "hidden",
+      !open
+    );
+
+    officeControls.classList.toggle(
+      "hidden",
+      open ||
+      state.screen !== "playing"
+    );
+
+    monitorButtonText.textContent =
+      open
+        ? "CLOSE CAMERAS"
+        : "OPEN CAMERAS";
+
+    if (open) {
+      cameraSystem.show(
+        state.selectedCamera
+      );
+
+      switchStatic();
+    }
+
+    if (!silent) {
+      staticBurst(
+        0.09,
+        0.03
+      );
+    }
+  }
+
+  function switchStatic() {
+    cameraNoise.classList.remove(
+      "switching"
+    );
+
+    void cameraNoise.offsetWidth;
+
+    cameraNoise.classList.add(
+      "switching"
+    );
+
+    staticBurst(
+      0.055,
+      0.018
+    );
+  }
+
+  function selectCamera(id) {
+    if (
+      !cameraSystem.show(id)
+    ) {
+      return;
+    }
+
+    state.selectedCamera = id;
+
+    const selected =
+      cameraSystem.getCurrent();
+
+    cameraCode.textContent =
+      `CAM ${selected.code}`;
+
+    cameraName.textContent =
+      selected.name.toUpperCase();
+
+    [
+      ...cameraMap.children
+    ].forEach(button => {
+      button.classList.toggle(
+        "active",
+        button.dataset.camera === id
+      );
+    });
+
+    switchStatic();
+  }
+
+  function toggleDoor(side) {
+    if (
+      state.powerOut ||
+      state.screen !== "playing"
+    ) {
+      return;
+    }
+
+    if (side === "left") {
+      state.leftDoor =
+        !state.leftDoor;
+    } else {
+      state.rightDoor =
+        !state.rightDoor;
+    }
+
+    tone(
+      95,
+      0.14,
+      0.045
+    );
+
+    updateControlButtons();
+  }
+
+  function setLight(
+    side,
+    enabled
+  ) {
+    if (
+      state.powerOut ||
+      state.monitorUp ||
+      state.screen !== "playing"
+    ) {
+      enabled = false;
+    }
+
+    if (side === "left") {
+      state.leftLight = enabled;
+    } else {
+      state.rightLight = enabled;
+    }
+
+    if (enabled) {
+      tone(
+        205,
+        0.055,
+        0.02
+      );
+    }
+
+    updateControlButtons();
+  }
+
+  function updateControlButtons() {
+    leftDoorButton.classList.toggle(
+      "active",
+      state.leftDoor
+    );
+
+    rightDoorButton.classList.toggle(
+      "active",
+      state.rightDoor
+    );
+
+    leftLightButton.classList.toggle(
+      "active",
+      state.leftLight
+    );
+
+    rightLightButton.classList.toggle(
+      "active",
+      state.rightLight
+    );
+
+    cameraSystem.setDoorState(
+      "left",
+      state.leftDoor
+    );
+
+    cameraSystem.setDoorState(
+      "right",
+      state.rightDoor
+    );
+  }
+
+  function currentHourIndex() {
+    return Math.min(
+      6,
+
+      Math.floor(
+        (
+          state.elapsed /
+          NIGHT_SECONDS
+        ) *
+        6
+      )
+    );
+  }
+
+  function currentHourText() {
+    const index =
+      currentHourIndex();
+
+    return index === 0
+      ? "12 AM"
+      : `${index} AM`;
+  }
+
+  function updateUI() {
+    const roundedPower =
+      Math.max(
+        0,
+        Math.ceil(state.power)
+      );
+
+    powerLabel.textContent =
+      `${roundedPower}%`;
+
+    powerFill.style.width =
+      `${state.power}%`;
+
+    powerFill.style.background =
+      state.power > 50
+        ? "#77ff9c"
+        : state.power > 20
+          ? "#ffe45c"
+          : "#ff493f";
+
+    hourLabel.textContent =
+      currentHourText();
+
+    nightLabel.textContent =
+      `NIGHT ${state.night}`;
+
+    office.setClock(
+      currentHourText()
+    );
+
+    const usage =
+      1 +
+      Number(state.monitorUp) +
+      Number(state.leftDoor) +
+      Number(state.rightDoor) +
+      Number(state.leftLight) +
+      Number(state.rightLight);
+
+    usageBars.forEach(
+      (bar, index) => {
+        bar.className = "";
+
+        if (index < usage) {
+          bar.classList.add(
+            "active"
+          );
+        }
+
+        if (
+          index < usage &&
+          usage >= 4
+        ) {
+          bar.classList.add(
+            "hot"
+          );
+        }
+
+        if (
+          index < usage &&
+          usage >= 6
+        ) {
+          bar.classList.add(
+            "danger"
+          );
+        }
+      }
+    );
+
+    [
+      ...cameraMap.children
+    ].forEach(button => {
+      const occupied =
+        enemies.some(
+          enemy =>
+            !enemy.insideOffice &&
+            enemy.camera ===
+              button.dataset.camera
+        );
+
+      button.classList.toggle(
+        "enemy",
+        occupied
+      );
+    });
+  }
+
+  function drainPower(delta) {
+    let perMinute =
+      POWER_RATES.clock;
+
+    if (state.monitorUp) {
+      perMinute +=
+        POWER_RATES.cameras;
+    }
+
+    if (state.leftLight) {
+      perMinute +=
+        POWER_RATES.lights;
+    }
+
+    if (state.rightLight) {
+      perMinute +=
+        POWER_RATES.lights;
+    }
+
+    if (state.leftDoor) {
+      perMinute +=
+        POWER_RATES.doors;
+    }
+
+    if (state.rightDoor) {
+      perMinute +=
+        POWER_RATES.doors;
+    }
+
+    state.power =
+      Math.max(
+        0,
+
+        state.power -
+        (
+          perMinute /
+          60
+        ) *
+        delta
+      );
+  }
+
+  function beginPowerOut(now) {
+    if (state.powerOut) {
+      return;
+    }
+
+    state.powerOut = true;
+    state.power = 0;
+    state.leftDoor = false;
+    state.rightDoor = false;
+    state.leftLight = false;
+    state.rightLight = false;
+
+    state.blackoutEndsAt =
+      now +
+      8500 +
+      Math.random() * 7000;
+
+    setMonitor(false);
+    updateControlButtons();
+
+    showMessage(
+      "POWER OUT",
+      3
+    );
+
+    tone(
+      42,
+      1.3,
+      0.07,
+      "sawtooth"
+    );
+  }
+
+  function loseNight(
+    enemyName = "Power Failure"
+  ) {
+    if (
+      state.screen !== "playing"
+    ) {
+      return;
+    }
+
+    state.screen = "lost";
+
+    setMonitor(false, true);
+
+    hud.classList.add("hidden");
+
+    officeControls.classList.add(
+      "hidden"
+    );
+
+    monitorButton.classList.add(
+      "hidden"
+    );
+
+    flash.classList.remove(
+      "active"
+    );
+
+    void flash.offsetWidth;
+
+    flash.classList.add(
+      "active"
+    );
+
+    staticBurst(
+      0.75,
+      0.1
+    );
+
+    tone(
+      58,
+      0.7,
+      0.09,
+      "sawtooth"
+    );
+
+    setTimeout(
+      () => {
+        resultTitle.textContent =
+          "GAME OVER";
+
+        resultText.textContent =
+          `CAUGHT BY ${enemyName.toUpperCase()}`;
+
+        resultScreen.classList.remove(
+          "hidden"
+        );
+      },
+      650
+    );
+  }
+
+  function winNight() {
+    if (
+      state.screen !== "playing"
+    ) {
+      return;
+    }
+
+    state.screen = "won";
+
+    setMonitor(false, true);
+
+    hud.classList.add("hidden");
+
+    officeControls.classList.add(
+      "hidden"
+    );
+
+    monitorButton.classList.add(
+      "hidden"
+    );
+
+    resultTitle.textContent =
+      "6 AM";
+
+    resultText.textContent =
+      "SHIFT COMPLETE";
+
+    resultScreen.classList.remove(
+      "hidden"
+    );
+
+    tone(
+      880,
+      0.45,
+      0.06,
+      "square"
+    );
+  }
+
+  function update(
+    delta,
+    now
+  ) {
+    if (
+      state.screen === "intro" &&
+      now >= state.introEndsAt
+    ) {
+      beginOffice(now);
+    }
+
+    if (
+      state.screen !== "playing"
+    ) {
+      return;
+    }
+
+    state.elapsed =
+      (
+        now -
+        state.startedAt
+      ) /
+      1000;
+
+    if (
+      state.elapsed >=
+      NIGHT_SECONDS
+    ) {
+      winNight();
+      return;
+    }
+
+    if (
+      state.messageUntil &&
+      now >= state.messageUntil
+    ) {
+      message.classList.add(
+        "hidden"
+      );
+
+      state.messageUntil = 0;
+    }
+
+    if (!state.powerOut) {
+      drainPower(delta);
+      updateEnemies(now);
+
+      if (state.power <= 0) {
+        beginPowerOut(now);
+      }
+    } else if (
+      now >=
+      state.blackoutEndsAt
+    ) {
+      loseNight(
+        "Power Failure"
+      );
+    }
+
+    updateUI();
+  }
+
+  function render(
+    delta,
+    now
+  ) {
+    const elapsed =
+      now / 1000;
+
+    office.update(
+      delta,
+      elapsed
+    );
+
+    cameraSystem.update(
+      delta,
+      elapsed,
+
+      enemies.map(
+        enemy => ({
+          id: enemy.id,
+          camera: enemy.camera,
+          color: enemy.color,
+          insideOffice:
+            enemy.insideOffice
+        })
+      )
+    );
+
+    if (
+      state.monitorUp &&
+      state.screen === "playing"
+    ) {
+      renderer.toneMappingExposure =
+        0.82;
+
+      renderer.render(
+        cameraSystem.scene,
+        cameraSystem.camera
+      );
+    } else {
+      renderer.toneMappingExposure =
+        1.08;
+
+      renderer.render(
+        office.scene,
+        office.camera
+      );
+    }
+  }
+
+  /*
+   * CAMERA MAP BUTTONS
+   */
+
+  cameraSystem.cameras.forEach(
+    cameraData => {
+      const button =
+        document.createElement(
+          "button"
+        );
+
+      button.type = "button";
+
+      button.className =
+        "camera-map-button";
+
+      button.dataset.camera =
+        cameraData.id;
+
+      button.innerHTML =
+        `CAM ${cameraData.code}` +
+        `<small>${cameraData.name}</small>`;
+
+      button.addEventListener(
+        "click",
+        () =>
+          selectCamera(
+            cameraData.id
+          )
+      );
+
+      cameraMap.append(button);
+    }
+  );
+
+  selectCamera("1a");
+
+  /*
+   * BUTTON INPUT
+   */
+
+  document
+    .querySelector("#startButton")
+    .addEventListener(
+      "click",
+      startNight
+    );
+
+  document
+    .querySelector("#restartButton")
+    .addEventListener(
+      "click",
+      startNight
+    );
+
+  monitorButton.addEventListener(
+    "click",
+    () =>
+      setMonitor(
+        !state.monitorUp
+      )
+  );
+
+  leftDoorButton.addEventListener(
+    "click",
+    () => toggleDoor("left")
+  );
+
+  rightDoorButton.addEventListener(
+    "click",
+    () => toggleDoor("right")
+  );
+
+  function bindMomentaryLight(
+    button,
+    side
+  ) {
+    button.addEventListener(
+      "pointerdown",
+      event => {
+        event.preventDefault();
+
+        button.setPointerCapture?.(
+          event.pointerId
+        );
+
+        setLight(
+          side,
+          true
+        );
+      }
+    );
+
+    button.addEventListener(
+      "pointerup",
+      () =>
+        setLight(
+          side,
+          false
+        )
+    );
+
+    button.addEventListener(
+      "pointercancel",
+      () =>
+        setLight(
+          side,
+          false
+        )
+    );
+
+    button.addEventListener(
+      "pointerleave",
+      event => {
+        if (event.buttons) {
+          setLight(
+            side,
+            false
+          );
+        }
+      }
+    );
+  }
+
+  bindMomentaryLight(
+    leftLightButton,
+    "left"
+  );
+
+  bindMomentaryLight(
+    rightLightButton,
+    "right"
+  );
+
+  /*
+   * OFFICE VIEW PANNING
+   */
+
+  window.addEventListener(
+    "pointermove",
+    event => {
+      if (state.monitorUp) {
+        return;
+      }
+
+      const bounds =
+        gameShell.getBoundingClientRect();
+
+      const normalized =
+        (
+          (
+            event.clientX -
+            bounds.left
+          ) /
+          bounds.width
+        ) *
+        2 -
+        1;
+
+      state.panTarget =
+        THREE.MathUtils.clamp(
+          normalized,
+          -1,
+          1
+        );
+    }
+  );
+
+  /*
+   * KEYBOARD CONTROLS
+   */
+
+  window.addEventListener(
+    "keydown",
+    event => {
+      if (
+        event.key.toLowerCase() ===
+        "f"
+      ) {
+        document.documentElement
+          .requestFullscreen?.();
+
+        return;
+      }
+
+      if (
+        state.screen !==
+        "playing"
+      ) {
+        return;
+      }
+
+      if (
+        event.code === "Space"
+      ) {
+        event.preventDefault();
+
+        setMonitor(
+          !state.monitorUp
+        );
+      }
+
+      if (
+        event.key.toLowerCase() ===
+        "a"
+      ) {
+        toggleDoor("left");
+      }
+
+      if (
+        event.key.toLowerCase() ===
+        "d"
+      ) {
+        toggleDoor("right");
+      }
+
+      if (
+        event.key.toLowerCase() ===
+        "q"
+      ) {
+        setLight(
+          "left",
+          true
+        );
+      }
+
+      if (
+        event.key.toLowerCase() ===
+        "e"
+      ) {
+        setLight(
+          "right",
+          true
+        );
+      }
+
+      if (
+        state.monitorUp &&
+        (
+          event.key ===
+            "ArrowLeft" ||
+          event.key ===
+            "ArrowRight"
+        )
+      ) {
+        const current =
+          cameraSystem.cameras
+            .findIndex(
+              item =>
+                item.id ===
+                state.selectedCamera
+            );
+
+        const direction =
+          event.key ===
+          "ArrowLeft"
+            ? -1
+            : 1;
+
+        const next =
+          (
+            current +
+            direction +
+            cameraSystem.cameras.length
+          ) %
+          cameraSystem.cameras.length;
+
+        selectCamera(
+          cameraSystem.cameras[
+            next
+          ].id
+        );
+      }
+    }
+  );
+
+  window.addEventListener(
+    "keyup",
+    event => {
+      if (
+        event.key.toLowerCase() ===
+        "q"
+      ) {
+        setLight(
+          "left",
+          false
+        );
+      }
+
+      if (
+        event.key.toLowerCase() ===
+        "e"
+      ) {
+        setLight(
+          "right",
+          false
+        );
+      }
+    }
+  );
+
+  window.addEventListener(
+    "blur",
+    () => {
+      setLight(
+        "left",
+        false
+      );
+
+      setLight(
+        "right",
+        false
+      );
+    }
+  );
+
+  window.addEventListener(
+    "resize",
+    () => {
+      renderer.setPixelRatio(
+        Math.min(
+          window.devicePixelRatio || 1,
+          1.35
+        )
+      );
+    }
+  );
+
+  /*
+   * MAIN LOOP
+   */
+
+  function frame(now) {
+    const delta =
+      Math.min(
+        0.1,
+        (
+          now -
+          lastFrame
+        ) /
+        1000
+      );
+
+    lastFrame = now;
+
+    update(
+      delta,
+      now
+    );
+
+    render(
+      delta,
+      now
+    );
+
+    requestAnimationFrame(frame);
+  }
+
+  updateControlButtons();
+  requestAnimationFrame(frame);
+
+  /*
+   * PUBLIC API
+   */
+
+  window.NeegyGame = {
+    getState() {
+      return {
+        ...state,
+
+        enemies:
+          enemies.map(
+            enemy => ({
+              ...enemy
+            })
+          )
+      };
+    },
+
+    showCamera:
+      selectCamera,
+
+    setMonitor,
+
+    toggleDoor,
+
+    startNight
   };
 })();
