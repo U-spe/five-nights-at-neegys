@@ -9,12 +9,14 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
   <link
     href="https://fonts.googleapis.com/css2?family=VT323&display=swap"
     rel="stylesheet"
   >
 
-  <link rel="stylesheet" href="style.css">
+  <!-- The CSS is inside the css folder. -->
+  <link rel="stylesheet" href="/css/style.css?v=3">
 </head>
 
 <body>
@@ -107,10 +109,13 @@
         <span id="recordingDot">● REC</span>
       </div>
 
-      <div id="cameraMap" aria-label="Camera map"></div>
+      <div id="cameraMap" aria-label="Camera map">
+        <div class="map-title">CAMERA NETWORK</div>
+        <div class="map-office">YOU</div>
+      </div>
 
       <div id="cameraHelp">
-        CLICK A ROOM OR USE ← →
+        SELECT CAMERA · ← →
       </div>
     </section>
 
@@ -130,39 +135,70 @@
       aria-live="assertive"
     ></div>
 
+    <!-- Restored old-style menu -->
     <section id="titleScreen" class="screen-card">
+      <div class="title-grid" aria-hidden="true"></div>
+
       <div class="title-copy">
+        <h1>
+          <span>5 NIGHTS</span>
+          <small>AT</small>
+          <b>NEEGYS</b>
+        </h1>
+
         <p class="eyebrow">
           NEEGY NATIONAL BANK
         </p>
 
-        <h1>
-          5 NIGHTS<br>
-          AT NEEGYS
-        </h1>
+        <nav id="titleMenu" aria-label="Main menu">
+          <button
+            id="startButton"
+            class="menu-item active"
+            data-menu-index="0"
+            type="button"
+          >
+            <span>NEW GAME</span>
+            <small>NIGHT 1</small>
+          </button>
 
-        <p class="title-warning">
-          Night security position available.<br>
-          Movement detected after closing.
-        </p>
+          <button
+            id="continueButton"
+            class="menu-item"
+            data-menu-index="1"
+            type="button"
+          >
+            <span>CONTINUE</span>
+            <small id="continueNight">NIGHT 1</small>
+          </button>
 
-        <button id="startButton" type="button">
-          NEW GAME
-        </button>
-
-        <p class="controls-copy">
-          A/D doors · Q/E lights · Space cameras · F fullscreen
-        </p>
+          <button
+            id="customNightButton"
+            class="menu-item"
+            data-menu-index="2"
+            type="button"
+          >
+            <span>CUSTOM NIGHT</span>
+            <small>20 / 20</small>
+          </button>
+        </nav>
       </div>
 
-      <div id="titleFigure" aria-hidden="true">
-        <i></i>
-        <b></b>
-        <em></em>
+      <div class="bank-seal" aria-hidden="true">
+        <div class="seal-ring">
+          <b>N</b>
+        </div>
+
+        <span>SECURITY SYSTEM</span>
       </div>
 
-      <div class="copyright">
-        AN ORIGINAL FAN-GAME PROTOTYPE
+      <div class="title-footer">
+        <span>
+          ↑ ↓ SELECT · ENTER CONFIRM · F FULLSCREEN
+        </span>
+
+        <span>
+          v0.3 THREE.JS BUILD
+        </span>
       </div>
     </section>
 
