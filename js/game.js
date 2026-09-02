@@ -1,4077 +1,2042 @@
-"use strict";
+// @ts-check
 
+(() => {
+  "use strict";
 
-/* ========================================================
-   CANVAS SETUP
-   ======================================================== */
+  const CAMERA_DEFINITIONS = [
+    {
+      id: "1a",
+      code: "1A",
+      name: "Bank Safe",
+      position: [17, 4.7, -16],
+      target: [17, 1.8, -23]
+    },
+    {
+      id: "1b",
+      code: "1B",
+      name: "Teller Room 1",
+      position: [-17, 4.7, 22.4],
+      target: [-17, 1.5, 17]
+    },
+    {
+      id: "1c",
+      code: "1C",
+      name: "Main Entrance",
+      position: [-7, 4.9, 24],
+      target: [0, 1.8, 29.5]
+    },
+    {
+      id: "1d",
+      code: "1D",
+      name: "Main Room",
+      position: [-7, 5, 23],
+      target: [0, 1.3, 17]
+    },
+    {
+      id: "2a",
+      code: "2A",
+      name: "Teller Room 2",
+      position: [17, 4.7, 22.4],
+      target: [17, 1.5, 17]
+    },
+    {
+      id: "2b",
+      code: "2B",
+      name: "Men's Bathroom",
+      position: [-17, 4.5, -4.8],
+      target: [-17, 1.3, -10]
+    },
+    {
+      id: "2c",
+      code: "2C",
+      name: "Women's Bathroom",
+      position: [17, 4.5, -4.8],
+      target: [17, 1.3, -10]
+    },
+    {
+      id: "3a",
+      code: "3A",
+      name: "Teller Room 3",
+      position: [-17, 4.7, 8.3],
+      target: [-17, 1.5, 3]
+    },
+    {
+      id: "3b",
+      code: "3B",
+      name: "Stock Market Room",
+      position: [-17, 4.7, -16],
+      target: [-17, 1.5, -23]
+    },
+    {
+      id: "3d",
+      code: "3D",
+      name: "Teller Room 4",
+      position: [17, 4.7, 8.3],
+      target: [17, 1.5, 3]
+    },
+    {
+      id: "2d",
+      code: "2D",
+      name: "Main Desk",
+      position: [-6, 4.4, 15],
+      target: [0, 1.5, 10]
+    },
+    {
+      id: "1e",
+      code: "1E",
+      name: "Left Hallway",
+      position: [-9, 4.8, 10],
+      target: [-9, 1.5, -9]
+    },
+    {
+      id: "2e",
+      code: "2E",
+      name: "Right Hallway",
+      position: [9, 4.8, 10],
+      target: [9, 1.5, -9]
+    },
+    {
+      id: "3e",
+      code: "3E",
+      name: "Left Door",
+      position: [-5, 4, -1],
+      target: [-11, 1.9, -4]
+    },
+    {
+      id: "4e",
+      code: "4E",
+      name: "Right Door",
+      position: [5, 4, -1],
+      target: [11, 1.9, -4]
+    },
+    {
+      id: "2f",
+      code: "2F",
+      name: "Teller Room 5",
+      position: [0, 4.7, -15],
+      target: [0, 1.5, -21]
+    }
+  ];
 
-const WIDTH = 1280;
-const HEIGHT = 720;
-const ASPECT = WIDTH / HEIGHT;
-
-
-const gameShell =
-    document.querySelector("#gameShell");
-
-const sceneCanvas =
-    document.querySelector("#sceneCanvas");
-
-const uiCanvas =
-    document.querySelector("#uiCanvas");
-
-
-const scene =
-    sceneCanvas.getContext("2d");
-
-const ui =
-    uiCanvas.getContext("2d");
-
-
-scene.imageSmoothingEnabled = false;
-ui.imageSmoothingEnabled = false;
-
-
-/* ========================================================
-   DOM
-   ======================================================== */
-
-const audioPermission =
-    document.querySelector("#audioPermission");
-
-const allowAudioButton =
-    document.querySelector("#allowAudioButton");
-
-const fullscreenDialog =
-    document.querySelector("#fullscreenDialog");
-
-const enterFullscreenButton =
-    document.querySelector("#enterFullscreenButton");
-
-const closeFullscreenButton =
-    document.querySelector("#closeFullscreenButton");
-
-
-/* ========================================================
-   DATA
-   ======================================================== */
-
-let gameData = null;
-let cameraData = [];
-let enemyData = [];
-
-
-const fallbackGameData = {
-    nightLengthSeconds: 360,
-
-    hourLabels: [
-        "12 AM",
-        "1 AM",
-        "2 AM",
-        "3 AM",
-        "4 AM",
-        "5 AM",
-        "6 AM"
+  const ROOM_SPOTS = {
+    "1a": [
+      [15.8, 0, -21.2],
+      [18.2, 0, -22.2],
+      [17, 0, -19.9]
     ],
-
-    powerDrainPerMinute: {
-        clock: 1,
-        cameras: 2.5,
-        lights: 2,
-        doors: 4
-    },
-
-    hourBoosts: []
-};
-
-
-const fallbackCameras = [
-    ["1a", "1A", "Bank Safe"],
-    ["1b", "1B", "Teller Room 1"],
-    ["1c", "1C", "Main Entrance"],
-    ["1d", "1D", "Main Room"],
-
-    ["2a", "2A", "Teller Room 2"],
-    ["2b", "2B", "Men's Bathroom"],
-    ["2c", "2C", "Women's Bathroom"],
-    ["2d", "2D", "Main Desk"],
-
-    ["3a", "3A", "Teller Room 3"],
-    ["3b", "3B", "Stock Market Room"],
-    ["3d", "3D", "Teller Room 4"],
-
-    ["1e", "1E", "Left Hallway"],
-    ["2e", "2E", "Right Hallway"],
-    ["3e", "3E", "Left Door"],
-    ["4e", "4E", "Right Door"],
-
-    ["1f", "1F", "Office"],
-    ["2f", "2F", "Teller Room 5"]
-].map(([id, code, name]) => ({
-    id,
-    code,
-    name
-}));
-
-
-const fallbackEnemies = [
-    {
-        id: "regular",
-        name: "Regular Neegy",
-        behavior: "wanderer",
-
-        startCamera: "1a",
-
-        route: [
-            "1a",
-            "1d",
-            "2d",
-            "1e",
-            "3e"
-        ],
-
-        attackSide: "left",
-
-        movementInterval: 4.9,
-        backtrackChance: 0.2,
-        doorGraceSeconds: 6,
-
-        aiByNight: [
-            3,
-            5,
-            7,
-            10,
-            12,
-            15,
-            20
-        ]
-    },
-
-    {
-        id: "girl",
-        name: "Girl Neegy",
-        behavior: "wanderer",
-
-        startCamera: "1a",
-
-        route: [
-            "1a",
-            "1b",
-            "3a",
-            "2e",
-            "4e"
-        ],
-
-        attackSide: "right",
-
-        movementInterval: 5,
-        backtrackChance: 0.3,
-        doorGraceSeconds: 7,
-
-        aiByNight: [
-            1,
-            3,
-            5,
-            8,
-            11,
-            14,
-            20
-        ]
-    },
-
-    {
-        id: "rapper",
-        name: "Rapper Neegy",
-        behavior: "stalker",
-
-        startCamera: "1a",
-
-        route: [
-            "1a",
-            "1c",
-            "1d",
-            "2d",
-            "2e",
-            "4e"
-        ],
-
-        attackSide: "right",
-
-        movementInterval: 3.1,
-        backtrackChance: 0,
-        doorGraceSeconds: 0,
-
-        aiByNight: [
-            0,
-            0,
-            2,
-            4,
-            7,
-            10,
-            20
-        ]
-    },
-
-    {
-        id: "farmer",
-        name: "Farmer Neegy",
-        behavior: "runner",
-
-        startCamera: "2f",
-
-        route: [
-            "2f",
-            "1e",
-            "3e"
-        ],
-
-        attackSide: "left",
-
-        movementInterval: 5.1,
-        backtrackChance: 0,
-        doorGraceSeconds: 0,
-
-        aiByNight: [
-            1,
-            2,
-            4,
-            6,
-            9,
-            12,
-            20
-        ]
-    },
-
-    {
-        id: "banana",
-        name: "Banana Neegy",
-        behavior: "corruptor",
-
-        startCamera: "3b",
-
-        route: [
-            "3b",
-            "3d",
-            "2d",
-            "2e",
-            "4e"
-        ],
-
-        attackSide: "right",
-
-        movementInterval: 5.4,
-        backtrackChance: 0.15,
-        doorGraceSeconds: 5,
-
-        aiByNight: [
-            0,
-            0,
-            0,
-            3,
-            6,
-            10,
-            20
-        ]
-    }
-];
-
-
-/* ========================================================
-   OPTIONAL IMAGE ASSETS
-   ======================================================== */
-
-/*
-Add your own original images using these names:
-
-assets/img/ui/title.jpg
-assets/img/office/normal.jpg
-assets/img/office/left-light.jpg
-assets/img/office/right-light.jpg
-
-assets/img/cameras/1a.jpg
-assets/img/cameras/1b.jpg
-etc.
-
-The engine still works without them.
-*/
-
-const assets = {
-    title: null,
-    office: null,
-    leftLight: null,
-    rightLight: null,
-    cameras: {}
-};
-
-
-async function loadImage(path) {
-    return new Promise((resolve) => {
-        const image =
-            new Image();
-
-        image.onload =
-            () => resolve(image);
-
-        image.onerror =
-            () => resolve(null);
-
-        image.src =
-            path;
-    });
-}
-
-
-async function loadAssets() {
-    const jobs = [
-        loadImage(
-            "assets/img/ui/title.jpg"
-        ).then((image) => {
-            assets.title = image;
-        }),
-
-        loadImage(
-            "assets/img/office/normal.jpg"
-        ).then((image) => {
-            assets.office = image;
-        }),
-
-        loadImage(
-            "assets/img/office/left-light.jpg"
-        ).then((image) => {
-            assets.leftLight = image;
-        }),
-
-        loadImage(
-            "assets/img/office/right-light.jpg"
-        ).then((image) => {
-            assets.rightLight = image;
-        })
-    ];
-
-    cameraData.forEach((camera) => {
-        jobs.push(
-            loadImage(
-                `assets/img/cameras/${camera.id}.jpg`
-            ).then((image) => {
-                assets.cameras[camera.id] =
-                    image;
-            })
-        );
-    });
-
-    await Promise.all(jobs);
-}
-
-
-/* ========================================================
-   GAME STATE
-   ======================================================== */
-
-const state = {
-    screen: "loading",
-
-    night: 1,
-    unlockedNight: Number(
-        localStorage.getItem(
-            "neegysUnlockedNight"
-        ) || "1"
-    ),
-
-    menuIndex: 0,
-
-    running: false,
-    powerOut: false,
-
-    nightStart: 0,
-    elapsed: 0,
-
-    power: 100,
-
-    officePan: 192,
-    officeTargetPan: 192,
-
-    leftDoor: false,
-    rightDoor: false,
-
-    leftDoorVisual: 0,
-    rightDoorVisual: 0,
-
-    leftLight: false,
-    rightLight: false,
-
-    cameraUp: false,
-    monitorAnimation: 0,
-
-    selectedCamera: "1a",
-
-    cameraJamUntil: 0,
-
-    blackoutAttackAt: 0,
-
-    jumpscareEnemy: null,
-    jumpscareStartedAt: 0,
-
-    message: "",
-
-    audioEnabled: false
-};
-
-
-const pointer = {
-    x: WIDTH / 2,
-    y: HEIGHT / 2,
-
-    down: false,
-    pressed: false,
-    released: false
-};
-
-
-let enemies = [];
-let lastFrame = performance.now();
-
-
-/* ========================================================
-   AUDIO
-   ======================================================== */
-
-let audioContext = null;
-
-
-function enableAudio() {
-    if (!audioContext) {
-        const AudioContextClass =
-            window.AudioContext ||
-            window.webkitAudioContext;
-
-        if (AudioContextClass) {
-            audioContext =
-                new AudioContextClass();
-        }
-    }
-
-    if (
-        audioContext &&
-        audioContext.state ===
-            "suspended"
-    ) {
-        audioContext.resume();
-    }
-
-    state.audioEnabled = true;
-
-    audioPermission.classList.add(
-        "hidden"
-    );
-}
-
-
-function playTone(
-    frequency,
-    duration = 0.08,
-    volume = 0.04,
-    type = "square"
-) {
-    if (
-        !state.audioEnabled ||
-        !audioContext
-    ) {
-        return;
-    }
-
-    const oscillator =
-        audioContext.createOscillator();
-
-    const gain =
-        audioContext.createGain();
-
-    oscillator.frequency.value =
-        frequency;
-
-    oscillator.type =
-        type;
-
-    gain.gain.setValueAtTime(
-        volume,
-        audioContext.currentTime
+    "1b": [
+      [-19, 0, 18],
+      [-16.8, 0, 16.4],
+      [-14.5, 0, 18.2]
+    ],
+    "1c": [
+      [-2.4, 0, 28.1],
+      [2.4, 0, 28.1],
+      [0, 0, 26.3]
+    ],
+    "1d": [
+      [-3.4, 0, 17.4],
+      [2.4, 0, 18.6],
+      [0, 0, 15.2]
+    ],
+    "2a": [
+      [14.7, 0, 18],
+      [17.2, 0, 16.4],
+      [19.3, 0, 18.2]
+    ],
+    "2b": [
+      [-18.7, 0, -8.4],
+      [-15.8, 0, -10.2],
+      [-17, 0, -7]
+    ],
+    "2c": [
+      [15.5, 0, -8.4],
+      [18.3, 0, -10],
+      [17, 0, -7]
+    ],
+    "3a": [
+      [-19, 0, 4],
+      [-16.7, 0, 2.3],
+      [-14.6, 0, 4.5]
+    ],
+    "3b": [
+      [-19.4, 0, -22.4],
+      [-16.8, 0, -20.2],
+      [-14.8, 0, -23]
+    ],
+    "3d": [
+      [14.7, 0, 4],
+      [17, 0, 2.3],
+      [19.4, 0, 4.5]
+    ],
+    "2d": [
+      [-2, 0, 10.8],
+      [2, 0, 11],
+      [0, 0, 8.5]
+    ],
+    "1e": [
+      [-9, 0, 4.5],
+      [-9, 0, -2],
+      [-9, 0, -7]
+    ],
+    "2e": [
+      [9, 0, 4.5],
+      [9, 0, -2],
+      [9, 0, -7]
+    ],
+    "3e": [
+      [-10.7, 0, -3.6],
+      [-11.2, 0, -4.7],
+      [-10.4, 0, -5]
+    ],
+    "4e": [
+      [10.7, 0, -3.6],
+      [11.2, 0, -4.7],
+      [10.4, 0, -5]
+    ],
+    "2f": [
+      [-2.5, 0, -20.4],
+      [0, 0, -22],
+      [2.5, 0, -20.2]
+    ]
+  };
+
+  function makeTexture(
+    size,
+    paint,
+    repeatX = 1,
+    repeatY = 1
+  ) {
+    const canvas =
+      document.createElement("canvas");
+
+    canvas.width = size;
+    canvas.height = size;
+
+    paint(
+      canvas.getContext("2d"),
+      size
     );
 
-    gain.gain.exponentialRampToValueAtTime(
-        0.0001,
-        audioContext.currentTime +
-            duration
+    const map =
+      new THREE.CanvasTexture(canvas);
+
+    map.colorSpace =
+      THREE.SRGBColorSpace;
+
+    map.wrapS =
+      THREE.RepeatWrapping;
+
+    map.wrapT =
+      THREE.RepeatWrapping;
+
+    map.repeat.set(
+      repeatX,
+      repeatY
     );
 
-    oscillator.connect(gain);
-    gain.connect(audioContext.destination);
-
-    oscillator.start();
-    oscillator.stop(
-        audioContext.currentTime +
-        duration
-    );
-}
-
-
-function playStaticBurst(
-    duration = 0.12,
-    volume = 0.04
-) {
-    if (
-        !state.audioEnabled ||
-        !audioContext
-    ) {
-        return;
-    }
-
-    const sampleCount =
-        Math.floor(
-            audioContext.sampleRate *
-            duration
-        );
-
-    const buffer =
-        audioContext.createBuffer(
-            1,
-            sampleCount,
-            audioContext.sampleRate
-        );
-
-    const channel =
-        buffer.getChannelData(0);
-
-    for (
-        let index = 0;
-        index < sampleCount;
-        index++
-    ) {
-        channel[index] =
-            Math.random() * 2 - 1;
-    }
-
-    const source =
-        audioContext.createBufferSource();
-
-    const gain =
-        audioContext.createGain();
-
-    source.buffer =
-        buffer;
-
-    gain.gain.value =
-        volume;
-
-    source.connect(gain);
-    gain.connect(audioContext.destination);
-
-    source.start();
-}
-
-
-/* ========================================================
-   RESIZING AND FULLSCREEN
-   ======================================================== */
-
-function resizeGame() {
-    const scale =
-        Math.min(
-            window.innerWidth / WIDTH,
-            window.innerHeight / HEIGHT
-        );
-
-    gameShell.style.transform =
-        `translate(-50%, -50%) scale(${scale})`;
-}
-
-
-async function enterFullscreen() {
-    try {
-        await document.documentElement
-            .requestFullscreen();
-
-        fullscreenDialog.classList.add(
-            "hidden"
-        );
-    } catch (error) {
-        console.warn(
-            "Fullscreen is unavailable.",
-            error
-        );
-    }
-}
-
-
-/* ========================================================
-   POINTER CONVERSION
-   ======================================================== */
-
-function updatePointer(event) {
-    const bounds =
-        gameShell.getBoundingClientRect();
-
-    pointer.x =
-        (
-            event.clientX -
-            bounds.left
-        ) /
-        bounds.width *
-        WIDTH;
-
-    pointer.y =
-        (
-            event.clientY -
-            bounds.top
-        ) /
-        bounds.height *
-        HEIGHT;
-
-    pointer.x =
-        Math.max(
-            0,
-            Math.min(WIDTH, pointer.x)
-        );
-
-    pointer.y =
-        Math.max(
-            0,
-            Math.min(HEIGHT, pointer.y)
-        );
-}
-
-
-function inside(
-    x,
-    y,
-    width,
-    height
-) {
-    return (
-        pointer.x >= x &&
-        pointer.x <= x + width &&
-        pointer.y >= y &&
-        pointer.y <= y + height
-    );
-}
-
-
-/* ========================================================
-   DATA LOADING
-   ======================================================== */
-
-async function loadJSON(
-    path,
-    fallback
-) {
-    try {
-        const response =
-            await fetch(path);
-
-        if (!response.ok) {
-            throw new Error(path);
-        }
-
-        return await response.json();
-    } catch {
-        return fallback;
-    }
-}
-
-
-async function bootGame() {
-    gameData =
-        await loadJSON(
-            "data/game.json",
-            fallbackGameData
-        );
-
-    cameraData =
-        await loadJSON(
-            "data/cameras.json",
-            fallbackCameras
-        );
-
-    enemyData =
-        await loadJSON(
-            "data/enemies.json",
-            fallbackEnemies
-        );
-
-    await loadAssets();
-
-    state.screen = "title";
-
-    const touchDevice =
-        matchMedia(
-            "(pointer: coarse)"
-        ).matches;
-
-    if (touchDevice) {
-        audioPermission.classList.remove(
-            "hidden"
-        );
-    }
-}
-
-
-/* ========================================================
-   ENEMY SYSTEM
-   ======================================================== */
-
-function createEnemies() {
-    const now =
-        performance.now();
-
-    enemies =
-        enemyData.map((enemy) => ({
-            ...enemy,
-
-            routeIndex: 0,
-
-            nextMovement:
-                now +
-                enemy.movementInterval *
-                    1000 +
-                Math.random() * 2500,
-
-            doorReachedAt: 0,
-
-            insideOffice: false,
-            insideOfficeAt: 0,
-
-            runnerStage: 0,
-            runnerHits: 0,
-            runnerAttackAt: 0,
-
-            corruption: 0
-        }));
-}
-
-
-function enemyCamera(enemy) {
-    return enemy.route[
-        enemy.routeIndex
-    ];
-}
-
-
-function currentHour() {
-    const percentage =
-        state.elapsed /
-        gameData.nightLengthSeconds;
-
-    return Math.min(
-        6,
-        Math.floor(
-            percentage * 6
-        )
-    );
-}
-
-
-function enemyAI(enemy) {
-    const nightIndex =
-        Math.min(
-            state.night - 1,
-            enemy.aiByNight.length - 1
-        );
-
-    let ai =
-        enemy.aiByNight[nightIndex];
-
-    const boosts =
-        gameData.hourBoosts || [];
-
-    boosts.forEach((boost) => {
-        if (
-            currentHour() >= boost.hour &&
-            boost.enemies.includes(enemy.id)
-        ) {
-            ai += boost.amount;
-        }
-    });
-
-    return Math.min(ai, 20);
-}
-
-
-function successfulMovement(enemy) {
-    const roll =
-        Math.floor(
-            Math.random() * 20
-        ) + 1;
-
-    return roll <= enemyAI(enemy);
-}
-
-
-function updateEnemies(now, delta) {
-    enemies.forEach((enemy) => {
-        if (enemy.insideOffice) {
-            if (
-                now -
-                enemy.insideOfficeAt >=
-                25000
-            ) {
-                startJumpscare(enemy);
-            }
-
-            return;
-        }
-
-        if (
-            enemy.behavior ===
-            "corruptor"
-        ) {
-            updateCorruptor(
-                enemy,
-                now,
-                delta
+    map.anisotropy = 4;
+
+    return map;
+  }
+
+  function createMaterials() {
+    const tile =
+      makeTexture(
+        192,
+        (ctx, size) => {
+          ctx.fillStyle = "#aeb4b0";
+          ctx.fillRect(0, 0, size, size);
+
+          for (
+            let i = 0;
+            i < 900;
+            i++
+          ) {
+            const shade =
+              135 +
+              Math.random() * 45;
+
+            ctx.fillStyle =
+              `rgba(${shade},${shade + 5},${shade},.09)`;
+
+            ctx.fillRect(
+              Math.random() * size,
+              Math.random() * size,
+              2,
+              2
             );
-        }
+          }
 
-        if (
-            enemy.behavior ===
-                "runner" &&
-            enemy.runnerAttackAt > 0
-        ) {
-            resolveRunner(
-                enemy,
-                now
+          ctx.strokeStyle =
+            "rgba(30,40,35,.42)";
+
+          ctx.lineWidth = 3;
+
+          ctx.strokeRect(
+            1.5,
+            1.5,
+            size - 3,
+            size - 3
+          );
+        },
+        14,
+        16
+      );
+
+    const carpet =
+      makeTexture(
+        192,
+        (ctx, size) => {
+          ctx.fillStyle = "#183127";
+          ctx.fillRect(0, 0, size, size);
+
+          for (
+            let i = 0;
+            i < 3200;
+            i++
+          ) {
+            ctx.fillStyle =
+              Math.random() > 0.5
+                ? "rgba(130,160,142,.07)"
+                : "rgba(0,0,0,.09)";
+
+            ctx.fillRect(
+              Math.random() * size,
+              Math.random() * size,
+              1,
+              2
+            );
+          }
+        },
+        10,
+        10
+      );
+
+    const wood =
+      makeTexture(
+        192,
+        (ctx, size) => {
+          ctx.fillStyle = "#6f4930";
+          ctx.fillRect(0, 0, size, size);
+
+          for (
+            let y = 0;
+            y < size;
+            y += 8
+          ) {
+            ctx.strokeStyle =
+              `rgba(35,15,6,${0.08 + Math.random() * 0.1})`;
+
+            ctx.beginPath();
+            ctx.moveTo(0, y);
+
+            ctx.bezierCurveTo(
+              50,
+              y - 5,
+              120,
+              y + 7,
+              size,
+              y
             );
 
-            return;
-        }
+            ctx.stroke();
+          }
+        },
+        3,
+        3
+      );
 
-        if (
-            now <
-            enemy.nextMovement
-        ) {
-            return;
-        }
-
-        enemy.nextMovement =
-            now +
-            enemy.movementInterval *
-                1000;
-
-        if (
-            enemy.behavior ===
-            "runner"
-        ) {
-            updateRunner(enemy, now);
-
-            return;
-        }
-
-        if (
-            enemy.behavior ===
-                "stalker" &&
-            state.cameraUp
-        ) {
-            return;
-        }
-
-        if (
-            !successfulMovement(enemy)
-        ) {
-            return;
-        }
-
-        advanceEnemy(enemy, now);
-    });
-}
-
-
-function advanceEnemy(enemy, now) {
-    const finalIndex =
-        enemy.route.length - 1;
-
-    if (
-        enemy.routeIndex ===
-        finalIndex
+    function material(
+      color,
+      options = {}
     ) {
-        attemptOfficeEntry(
-            enemy,
-            now
-        );
-
-        return;
+      return new THREE.MeshStandardMaterial({
+        color,
+        roughness: 0.7,
+        metalness: 0.04,
+        ...options
+      });
     }
 
-    const canBacktrack =
-        enemy.behavior ===
-            "wanderer" ||
-        enemy.behavior ===
-            "corruptor";
-
-    const backtrack =
-        canBacktrack &&
-        enemy.routeIndex > 0 &&
-        Math.random() <
-            enemy.backtrackChance;
-
-    if (backtrack) {
-        enemy.routeIndex--;
-    } else {
-        enemy.routeIndex++;
-    }
-
-    if (
-        enemy.routeIndex ===
-        finalIndex
-    ) {
-        enemy.doorReachedAt =
-            now;
-
-        state.message =
-            `${enemy.name} reached the ${enemy.attackSide} side`;
-    } else {
-        state.message =
-            "Movement detected";
-    }
-}
-
-
-function attemptOfficeEntry(
-    enemy,
-    now
-) {
-    const closed =
-        enemy.attackSide === "left"
-            ? state.leftDoor
-            : state.rightDoor;
-
-    if (closed) {
-        if (
-            enemy.behavior ===
-            "stalker"
-        ) {
-            state.message =
-                "Something remains outside";
-
-            return;
-        }
-
-        enemy.routeIndex =
-            enemy.behavior ===
-                "corruptor"
-                ? 0
-                : 1;
-
-        enemy.doorReachedAt = 0;
-
-        state.message =
-            `${enemy.name} moved away`;
-
-        return;
-    }
-
-    enemy.insideOffice = true;
-
-    enemy.insideOfficeAt =
-        now;
-
-    state.message =
-        "Something entered the office";
-}
-
-
-/* ========================================================
-   FARMER
-   ======================================================== */
-
-function updateRunner(enemy, now) {
-    if (state.cameraUp) {
-        return;
-    }
-
-    if (!successfulMovement(enemy)) {
-        return;
-    }
-
-    enemy.runnerStage++;
-
-    state.message =
-        "Movement near Teller Room 5";
-
-    if (enemy.runnerStage < 3) {
-        return;
-    }
-
-    enemy.routeIndex =
-        enemy.route.length - 1;
-
-    enemy.runnerAttackAt =
-        now + 1400;
-
-    state.message =
-        "FAST FOOTSTEPS FROM THE LEFT";
-
-    playTone(
-        85,
-        0.35,
-        0.05,
-        "sawtooth"
-    );
-}
-
-
-function resolveRunner(enemy, now) {
-    if (
-        now <
-        enemy.runnerAttackAt
-    ) {
-        return;
-    }
-
-    enemy.runnerAttackAt = 0;
-
-    if (state.leftDoor) {
-        const damage =
-            1 +
-            enemy.runnerHits * 5;
-
-        state.power =
-            Math.max(
-                0,
-                state.power -
-                    damage
-            );
-
-        enemy.runnerHits++;
-        enemy.runnerStage = 0;
-        enemy.routeIndex = 0;
-
-        state.message =
-            `Door impact: -${damage}%`;
-
-        playTone(
-            45,
-            0.4,
-            0.1,
-            "square"
-        );
-
-        return;
-    }
-
-    startJumpscare(enemy);
-}
-
-
-/* ========================================================
-   BANANA
-   ======================================================== */
-
-function updateCorruptor(
-    enemy,
-    now,
-    delta
-) {
-    const beingWatched =
-        state.cameraUp &&
-        state.selectedCamera ===
-            enemyCamera(enemy);
-
-    if (!beingWatched) {
-        enemy.corruption = 0;
-
-        return;
-    }
-
-    enemy.corruption +=
-        delta;
-
-    if (enemy.corruption < 4) {
-        return;
-    }
-
-    enemy.corruption = 0;
-
-    advanceEnemy(enemy, now);
-
-    state.cameraJamUntil =
-        now + 5000;
-
-    state.message =
-        "CAMERA NETWORK JAMMED";
-
-    playStaticBurst(
-        0.5,
-        0.09
-    );
-}
-
-
-/* ========================================================
-   NIGHT CONTROL
-   ======================================================== */
-
-function startNight(night) {
-    const now =
-        performance.now();
-
-    state.night =
-        night;
-
-    state.screen =
-        "nightIntro";
-
-    state.running =
-        false;
-
-    state.powerOut =
-        false;
-
-    state.power =
-        100;
-
-    state.elapsed =
-        0;
-
-    state.leftDoor =
-        false;
-
-    state.rightDoor =
-        false;
-
-    state.leftDoorVisual =
-        0;
-
-    state.rightDoorVisual =
-        0;
-
-    state.leftLight =
-        false;
-
-    state.rightLight =
-        false;
-
-    state.cameraUp =
-        false;
-
-    state.monitorAnimation =
-        0;
-
-    state.selectedCamera =
-        "1a";
-
-    state.cameraJamUntil =
-        0;
-
-    state.blackoutAttackAt =
-        0;
-
-    state.jumpscareEnemy =
-        null;
-
-    state.message =
-        "";
-
-    state.nightStart =
-        now + 3000;
-
-    createEnemies();
-
-    playStaticBurst(
+    return {
+      floor: material(0xffffff, {
+        map: tile,
+        roughness: 0.8
+      }),
+
+      carpet: material(0xffffff, {
+        map: carpet,
+        roughness: 0.96
+      }),
+
+      wood: material(0xffffff, {
+        map: wood,
+        roughness: 0.5
+      }),
+
+      wall: material(0xdadbd4, {
+        roughness: 0.9
+      }),
+
+      ceiling: material(0xbfc4bf, {
+        roughness: 0.92
+      }),
+
+      dark: material(0x111512, {
+        roughness: 0.76
+      }),
+
+      green: material(0x155f3c),
+      blue: material(0x173d67),
+
+      white: material(0xf0f0e9, {
+        roughness: 0.46
+      }),
+
+      steel: material(0x737c7e, {
+        metalness: 0.82,
+        roughness: 0.22
+      }),
+
+      chrome: material(0xc6cecf, {
+        metalness: 0.95,
+        roughness: 0.1
+      }),
+
+      glass: material(0x96d9df, {
+        transparent: true,
+        opacity: 0.2,
+        depthWrite: false,
+        roughness: 0.08
+      }),
+
+      mirror: material(0xbde1e6, {
+        metalness: 0.85,
+        roughness: 0.04
+      }),
+
+      light: material(0xffffff, {
+        emissive: 0xffffff,
+        emissiveIntensity: 4
+      }),
+
+      screen: material(0x07120b, {
+        emissive: 0x31ff75,
+        emissiveIntensity: 2.3
+      }),
+
+      screenRed: material(0x1a0705, {
+        emissive: 0xff332b,
+        emissiveIntensity: 2.4
+      })
+    };
+  }
+
+  function createCameraSystem() {
+    const scene = new THREE.Scene();
+
+    scene.background =
+      new THREE.Color(0x060807);
+
+    scene.fog =
+      new THREE.Fog(
+        0x060807,
+        38,
+        82
+      );
+
+    const camera =
+      new THREE.PerspectiveCamera(
+        72,
+        16 / 9,
         0.1,
-        0.03
-    );
-}
+        150
+      );
 
+    const materials =
+      createMaterials();
 
-function beginOffice() {
-    state.screen =
-        "office";
+    const figures =
+      new Map();
 
-    state.running =
-        true;
+    const doorMeshes = {};
 
-    state.nightStart =
-        performance.now();
-}
+    let selected =
+      CAMERA_DEFINITIONS[0];
 
-
-function completeNight() {
-    state.running =
-        false;
-
-    state.screen =
-        "victory";
-
-    const nextNight =
-        Math.min(
-            7,
-            state.night + 1
+    function box(
+      x,
+      y,
+      z,
+      width,
+      height,
+      depth,
+      material,
+      rotationY = 0,
+      parent = scene
+    ) {
+      const mesh =
+        new THREE.Mesh(
+          new THREE.BoxGeometry(
+            width,
+            height,
+            depth
+          ),
+          material
         );
 
-    state.unlockedNight =
-        Math.max(
-            state.unlockedNight,
-            nextNight
+      mesh.position.set(x, y, z);
+      mesh.rotation.y = rotationY;
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+
+      parent.add(mesh);
+
+      return mesh;
+    }
+
+    function cylinder(
+      x,
+      y,
+      z,
+      radius,
+      depth,
+      material,
+      rotationX = 0,
+      rotationZ = 0,
+      parent = scene,
+      segments = 24
+    ) {
+      const mesh =
+        new THREE.Mesh(
+          new THREE.CylinderGeometry(
+            radius,
+            radius,
+            depth,
+            segments
+          ),
+          material
         );
 
-    localStorage.setItem(
-        "neegysUnlockedNight",
-        String(
-            state.unlockedNight
-        )
-    );
+      mesh.position.set(x, y, z);
+      mesh.rotation.x = rotationX;
+      mesh.rotation.z = rotationZ;
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
 
-    playTone(
-        880,
+      parent.add(mesh);
+
+      return mesh;
+    }
+
+    function sphere(
+      x,
+      y,
+      z,
+      radius,
+      material,
+      parent = scene
+    ) {
+      const mesh =
+        new THREE.Mesh(
+          new THREE.SphereGeometry(
+            radius,
+            18,
+            12
+          ),
+          material
+        );
+
+      mesh.position.set(x, y, z);
+      mesh.castShadow = true;
+
+      parent.add(mesh);
+
+      return mesh;
+    }
+
+    function sign(
+      text,
+      x,
+      y,
+      z,
+      rotationY = 0,
+      width = 5,
+      background = "#113a28"
+    ) {
+      const canvas =
+        document.createElement("canvas");
+
+      canvas.width = 1024;
+      canvas.height = 256;
+
+      const ctx =
+        canvas.getContext("2d");
+
+      ctx.fillStyle = background;
+
+      ctx.fillRect(
+        0,
+        0,
+        canvas.width,
+        canvas.height
+      );
+
+      let size = 104;
+
+      ctx.font =
+        `800 ${size}px Arial`;
+
+      while (
+        ctx.measureText(text).width > 900 &&
+        size > 38
+      ) {
+        size -= 4;
+        ctx.font =
+          `800 ${size}px Arial`;
+      }
+
+      ctx.fillStyle = "#eaffef";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+
+      ctx.fillText(
+        text,
+        512,
+        128
+      );
+
+      const map =
+        new THREE.CanvasTexture(canvas);
+
+      map.colorSpace =
+        THREE.SRGBColorSpace;
+
+      const mesh =
+        new THREE.Mesh(
+          new THREE.PlaneGeometry(
+            width,
+            width / 4
+          ),
+
+          new THREE.MeshBasicMaterial({
+            map,
+            side: THREE.DoubleSide
+          })
+        );
+
+      mesh.position.set(x, y, z);
+      mesh.rotation.y = rotationY;
+
+      scene.add(mesh);
+
+      return mesh;
+    }
+
+    function ceilingLight(
+      x,
+      z,
+      width = 4
+    ) {
+      box(
+        x,
+        5.9,
+        z,
+        width,
+        0.08,
+        0.65,
+        materials.light
+      );
+    }
+
+    function chair(
+      x,
+      z,
+      rotationY = 0
+    ) {
+      const group =
+        new THREE.Group();
+
+      group.position.set(x, 0, z);
+      group.rotation.y = rotationY;
+
+      scene.add(group);
+
+      box(
+        0,
+        0.55,
+        0,
+        1.05,
+        0.18,
+        1,
+        materials.blue,
+        0,
+        group
+      );
+
+      box(
+        0,
+        1.15,
+        -0.43,
+        1.05,
+        1.18,
+        0.15,
+        materials.blue,
+        0,
+        group
+      );
+
+      for (
+        const sideX of [-0.38, 0.38]
+      ) {
+        for (
+          const sideZ of [-0.34, 0.34]
+        ) {
+          cylinder(
+            sideX,
+            0.26,
+            sideZ,
+            0.05,
+            0.5,
+            materials.chrome,
+            0,
+            0,
+            group,
+            10
+          );
+        }
+      }
+    }
+
+    function monitor(
+      x,
+      y,
+      z,
+      red = false,
+      rotationY = 0
+    ) {
+      const group =
+        new THREE.Group();
+
+      group.position.set(x, y, z);
+      group.rotation.y = rotationY;
+
+      scene.add(group);
+
+      box(
+        0,
+        0,
+        0,
+        1.1,
+        0.72,
+        0.12,
+        materials.dark,
+        0,
+        group
+      );
+
+      box(
+        0,
+        0,
+        0.067,
+        0.92,
+        0.55,
+        0.025,
+        red
+          ? materials.screenRed
+          : materials.screen,
+        0,
+        group
+      );
+
+      cylinder(
+        0,
+        -0.47,
+        0,
+        0.05,
+        0.54,
+        materials.chrome,
+        0,
+        0,
+        group,
+        10
+      );
+
+      box(
+        0,
+        -0.75,
+        0,
         0.5,
         0.06,
-        "square"
-    );
-}
+        0.36,
+        materials.chrome,
+        0,
+        group
+      );
+    }
 
-
-function startJumpscare(enemy) {
-    if (
-        state.screen ===
-        "jumpscare"
+    function tellerRoom(
+      x,
+      z,
+      label
     ) {
-        return;
-    }
-
-    state.running =
-        false;
-
-    state.screen =
-        "jumpscare";
-
-    state.jumpscareEnemy =
-        enemy;
-
-    state.jumpscareStartedAt =
-        performance.now();
-
-    playStaticBurst(
-        0.9,
-        0.15
-    );
-
-    playTone(
-        65,
-        0.8,
-        0.12,
-        "sawtooth"
-    );
-}
-
-
-function beginPowerFailure(now) {
-    if (state.powerOut) {
-        return;
-    }
-
-    state.powerOut =
-        true;
-
-    state.power =
-        0;
-
-    state.cameraUp =
-        false;
-
-    state.leftDoor =
-        false;
-
-    state.rightDoor =
-        false;
-
-    state.leftLight =
-        false;
-
-    state.rightLight =
-        false;
-
-    state.blackoutAttackAt =
-        now +
-        8000 +
-        Math.random() * 12000;
-
-    state.message =
-        "POWER FAILURE";
-
-    playTone(
-        35,
-        1.5,
+      box(
+        x,
+        0.03,
+        z,
+        10.5,
         0.08,
-        "sawtooth"
-    );
-}
-
-
-/* ========================================================
-   UPDATE
-   ======================================================== */
-
-function update(delta, now) {
-    state.leftDoorVisual +=
-        (
-            Number(state.leftDoor) -
-            state.leftDoorVisual
-        ) *
-        Math.min(
-            1,
-            delta * 9
-        );
-
-    state.rightDoorVisual +=
-        (
-            Number(state.rightDoor) -
-            state.rightDoorVisual
-        ) *
-        Math.min(
-            1,
-            delta * 9
-        );
-
-    state.monitorAnimation +=
-        (
-            Number(state.cameraUp) -
-            state.monitorAnimation
-        ) *
-        Math.min(
-            1,
-            delta * 11
-        );
-
-    if (
-        state.screen ===
-            "nightIntro" &&
-        now >= state.nightStart
-    ) {
-        beginOffice();
-    }
-
-    if (
-        state.screen !== "office" ||
-        !state.running
-    ) {
-        return;
-    }
-
-    state.elapsed =
-        (
-            now -
-            state.nightStart
-        ) /
-        1000;
-
-    if (
-        state.elapsed >=
-        gameData.nightLengthSeconds
-    ) {
-        completeNight();
-
-        return;
-    }
-
-    if (state.powerOut) {
-        if (
-            now >=
-            state.blackoutAttackAt
-        ) {
-            const rapper =
-                enemies.find(
-                    (enemy) =>
-                        enemy.id ===
-                        "rapper"
-                ) ||
-                enemies[0];
-
-            startJumpscare(
-                rapper
-            );
-        }
-
-        return;
-    }
-
-    updateOfficePan(delta);
-
-    drainPower(delta);
-
-    updateEnemies(
-        now,
-        delta
-    );
-
-    if (state.power <= 0) {
-        beginPowerFailure(now);
-    }
-}
-
-
-function updateOfficePan(delta) {
-    if (
-        pointer.x < 260
-    ) {
-        state.officeTargetPan = 0;
-    } else if (
-        pointer.x > 1020
-    ) {
-        state.officeTargetPan = 384;
-    } else {
-        state.officeTargetPan =
-            (
-                pointer.x /
-                WIDTH
-            ) *
-            384;
-    }
-
-    state.officePan +=
-        (
-            state.officeTargetPan -
-            state.officePan
-        ) *
-        Math.min(
-            1,
-            delta * 3.5
-        );
-}
-
-
-function drainPower(delta) {
-    const rates =
-        gameData.powerDrainPerMinute;
-
-    let drain =
-        rates.clock;
-
-    if (state.cameraUp) {
-        drain +=
-            rates.cameras;
-    }
-
-    if (state.leftLight) {
-        drain +=
-            rates.lights;
-    }
-
-    if (state.rightLight) {
-        drain +=
-            rates.lights;
-    }
-
-    if (state.leftDoor) {
-        drain +=
-            rates.doors;
-    }
-
-    if (state.rightDoor) {
-        drain +=
-            rates.doors;
-    }
-
-    state.power -=
-        (
-            drain /
-            60
-        ) *
-        delta;
-
-    state.power =
-        Math.max(
-            0,
-            state.power
-        );
-}
-
-
-/* ========================================================
-   DRAWING HELPERS
-   ======================================================== */
-
-function clearCanvases() {
-    scene.clearRect(
-        0,
-        0,
-        WIDTH,
-        HEIGHT
-    );
-
-    ui.clearRect(
-        0,
-        0,
-        WIDTH,
-        HEIGHT
-    );
-}
-
-
-function centeredText(
-    context,
-    text,
-    y
-) {
-    context.fillText(
-        text,
-        (
-            WIDTH -
-            context.measureText(text).width
-        ) /
-        2,
-        y
-    );
-}
-
-
-function fillButton(
-    context,
-    rectangle,
-    active = false
-) {
-    context.fillStyle =
-        active
-            ? "#d9d9d2"
-            : "#101410";
-
-    context.fillRect(
-        rectangle.x,
-        rectangle.y,
-        rectangle.width,
-        rectangle.height
-    );
-
-    context.strokeStyle =
-        active
-            ? "#ffffff"
-            : "#505850";
-
-    context.lineWidth =
-        active ? 4 : 2;
-
-    context.strokeRect(
-        rectangle.x,
-        rectangle.y,
-        rectangle.width,
-        rectangle.height
-    );
-}
-
-
-function drawStatic(
-    context,
-    opacity = 0.12
-) {
-    context.save();
-
-    context.globalAlpha =
-        opacity;
-
-    for (
-        let line = 0;
-        line < 70;
-        line++
-    ) {
-        const y =
-            Math.random() *
-            HEIGHT;
-
-        const brightness =
-            Math.floor(
-                Math.random() * 255
-            );
-
-        context.fillStyle =
-            `rgb(${brightness}, ${brightness}, ${brightness})`;
-
-        context.fillRect(
-            Math.random() * WIDTH,
-            y,
-            20 +
-                Math.random() *
-                250,
-            Math.random() < 0.8
-                ? 1
-                : 3
-        );
-    }
-
-    context.restore();
-}
-
-
-function drawVignette(context) {
-    const gradient =
-        context.createRadialGradient(
-            WIDTH / 2,
-            HEIGHT / 2,
-            150,
-            WIDTH / 2,
-            HEIGHT / 2,
-            700
-        );
-
-    gradient.addColorStop(
-        0,
-        "rgba(0,0,0,0)"
-    );
-
-    gradient.addColorStop(
-        1,
-        "rgba(0,0,0,0.78)"
-    );
-
-    context.fillStyle =
-        gradient;
-
-    context.fillRect(
-        0,
-        0,
-        WIDTH,
-        HEIGHT
-    );
-}
-
-
-/* ========================================================
-   TITLE
-   ======================================================== */
-
-function drawTitle(now) {
-    if (assets.title) {
-        scene.drawImage(
-            assets.title,
-            0,
-            0,
-            WIDTH,
-            HEIGHT
-        );
-    } else {
-        const background =
-            scene.createLinearGradient(
-                0,
-                0,
-                WIDTH,
-                HEIGHT
-            );
-
-        background.addColorStop(
-            0,
-            "#030403"
-        );
-
-        background.addColorStop(
-            0.55,
-            "#090d09"
-        );
-
-        background.addColorStop(
-            1,
-            "#010201"
-        );
-
-        scene.fillStyle =
-            background;
-
-        scene.fillRect(
-            0,
-            0,
-            WIDTH,
-            HEIGHT
-        );
-
-        drawVault();
-    }
-
-    drawVignette(scene);
-
-    ui.fillStyle =
-        "#ffffff";
-
-    ui.font =
-        "78px VT323";
-
-    ui.fillText(
-        "5 NIGHTS",
-        95,
-        185
-    );
-
-    ui.font =
-        "43px VT323";
-
-    ui.fillStyle =
-        "#9a9a9a";
-
-    ui.fillText(
-        "AT",
-        103,
-        230
-    );
-
-    ui.font =
-        "126px VT323";
-
-    ui.fillStyle =
-        "#9cff79";
-
-    ui.fillText(
-        "NEEGYS",
-        90,
-        335
-    );
-
-    ui.font =
-        "25px VT323";
-
-    ui.fillStyle =
-        "#c6a85c";
-
-    ui.fillText(
-        "NEEGY NATIONAL BANK",
-        97,
-        380
-    );
-
-    drawTitleMenu();
-
-    ui.font =
-        "20px VT323";
-
-    ui.fillStyle =
-        "#6c726d";
-
-    ui.fillText(
-        "F: FULLSCREEN",
-        30,
-        690
-    );
-
-    ui.fillText(
-        "v0.2 CANVAS BUILD",
-        1070,
-        690
-    );
-
-    drawStatic(
-        ui,
-        0.05 +
-        Math.sin(now / 100) *
-        0.015
-    );
-}
-
-
-function drawVault() {
-    scene.save();
-
-    scene.translate(
-        985,
-        355
-    );
-
-    scene.strokeStyle =
-        "#1c261e";
-
-    scene.lineWidth =
-        35;
-
-    scene.beginPath();
-
-    scene.arc(
-        0,
-        0,
-        230,
-        0,
-        Math.PI * 2
-    );
-
-    scene.stroke();
-
-    scene.strokeStyle =
-        "#344038";
-
-    scene.lineWidth =
-        5;
-
-    scene.beginPath();
-
-    scene.arc(
-        0,
-        0,
-        172,
-        0,
-        Math.PI * 2
-    );
-
-    scene.stroke();
-
-    for (
-        let index = 0;
-        index < 12;
-        index++
-    ) {
-        const angle =
-            index /
-            12 *
-            Math.PI *
-            2;
-
-        scene.save();
-
-        scene.rotate(angle);
-
-        scene.fillStyle =
-            "#222b24";
-
-        scene.fillRect(
-            150,
-            -8,
-            65,
-            16
-        );
-
-        scene.restore();
-    }
-
-    scene.fillStyle =
-        "#090c09";
-
-    scene.beginPath();
-
-    scene.arc(
-        0,
-        0,
-        105,
-        0,
-        Math.PI * 2
-    );
-
-    scene.fill();
-
-    scene.strokeStyle =
-        "#4a554c";
-
-    scene.lineWidth =
-        4;
-
-    scene.stroke();
-
-    scene.fillStyle =
-        "#273629";
-
-    scene.font =
-        "150px VT323";
-
-    scene.textAlign =
-        "center";
-
-    scene.fillText(
-        "N",
-        0,
-        50
-    );
-
-    scene.restore();
-}
-
-
-function titleButtons() {
-    return [
-        {
-            text: "NEW GAME",
-            subtext: "NIGHT 1",
-            x: 95,
-            y: 430,
-            width: 310,
-            height: 48
-        },
-
-        {
-            text: "CONTINUE",
-            subtext:
-                `NIGHT ${state.unlockedNight}`,
-            x: 95,
-            y: 488,
-            width: 310,
-            height: 48
-        },
-
-        {
-            text: "CUSTOM NIGHT",
-            subtext: "20 / 20",
-            x: 95,
-            y: 546,
-            width: 310,
-            height: 48
-        }
-    ];
-}
-
-
-function drawTitleMenu() {
-    const buttons =
-        titleButtons();
-
-    buttons.forEach(
-        (button, index) => {
-            const active =
-                state.menuIndex === index;
-
-            ui.fillStyle =
-                active
-                    ? "rgba(156,255,121,0.16)"
-                    : "rgba(0,0,0,0.4)";
-
-            ui.fillRect(
-                button.x,
-                button.y,
-                button.width,
-                button.height
-            );
-
-            ui.fillStyle =
-                active
-                    ? "#9cff79"
-                    : "#aaaaaa";
-
-            ui.fillRect(
-                button.x,
-                button.y,
-                active ? 6 : 2,
-                button.height
-            );
-
-            ui.font =
-                "31px VT323";
-
-            ui.fillText(
-                button.text,
-                button.x + 18,
-                button.y + 33
-            );
-
-            ui.font =
-                "18px VT323";
-
-            ui.fillStyle =
-                active
-                    ? "#c6d5c8"
-                    : "#575d58";
-
-            ui.textAlign =
-                "right";
-
-            ui.fillText(
-                button.subtext,
-                button.x +
-                    button.width -
-                    14,
-                button.y + 31
-            );
-
-            ui.textAlign =
-                "left";
-        }
-    );
-}
-
-
-/* ========================================================
-   NIGHT INTRO
-   ======================================================== */
-
-function drawNightIntro() {
-    scene.fillStyle =
-        "black";
-
-    scene.fillRect(
-        0,
-        0,
-        WIDTH,
-        HEIGHT
-    );
-
-    ui.fillStyle =
-        "white";
-
-    ui.font =
-        "70px VT323";
-
-    centeredText(
-        ui,
-        `Night ${state.night}`,
-        330
-    );
-
-    ui.font =
-        "35px VT323";
-
-    ui.fillStyle =
-        "#a4aaa5";
-
-    centeredText(
-        ui,
-        "12:00 AM",
-        380
-    );
-}
-
-
-/* ========================================================
-   OFFICE DRAWING
-   ======================================================== */
-
-function drawOffice(now) {
-    if (assets.office) {
-        scene.drawImage(
-            assets.office,
-            -state.officePan,
-            0,
-            1664,
-            720
-        );
-    } else {
-        drawFallbackOffice();
-    }
-
-    if (
-        state.leftLight &&
-        assets.leftLight
-    ) {
-        scene.drawImage(
-            assets.leftLight,
-            -state.officePan,
-            0,
-            1664,
-            720
-        );
-    }
-
-    if (
-        state.rightLight &&
-        assets.rightLight
-    ) {
-        scene.drawImage(
-            assets.rightLight,
-            -state.officePan,
-            0,
-            1664,
-            720
-        );
-    }
-
-    drawDoor(
-        "left",
-        state.leftDoorVisual
-    );
-
-    drawDoor(
-        "right",
-        state.rightDoorVisual
-    );
-
-    drawDoorEnemies();
-
-    if (state.cameraUp) {
-        drawCameraView(
-            now
-        );
-    }
-
-    drawMonitorAnimation();
-
-    if (!state.cameraUp) {
-        drawOfficeUI();
-    }
-
-    drawHUD();
-    drawVignette(ui);
-
-    if (state.powerOut) {
-        ui.fillStyle =
-            "rgba(0,0,0,0.92)";
-
-        ui.fillRect(
-            0,
-            0,
-            WIDTH,
-            HEIGHT
-        );
-
-        ui.font =
-            "35px VT323";
-
-        ui.fillStyle =
-            "#381d1d";
-
-        centeredText(
-            ui,
-            "POWER FAILURE",
-            675
-        );
-    }
-}
-
-
-function drawFallbackOffice() {
-    const pan =
-        state.officePan;
-
-    scene.save();
-
-    scene.translate(
-        -pan,
-        0
-    );
-
-    const wall =
-        scene.createRadialGradient(
-            832,
-            400,
-            50,
-            832,
-            400,
-            800
-        );
-
-    wall.addColorStop(
-        0,
-        "#242820"
-    );
-
-    wall.addColorStop(
-        0.5,
-        "#0e110e"
-    );
-
-    wall.addColorStop(
-        1,
-        "#010201"
-    );
-
-    scene.fillStyle =
-        wall;
-
-    scene.fillRect(
-        0,
-        0,
-        1664,
-        720
-    );
-
-    scene.fillStyle =
-        "#020302";
-
-    scene.fillRect(
-        0,
-        70,
-        300,
-        530
-    );
-
-    scene.fillRect(
-        1364,
-        70,
-        300,
-        530
-    );
-
-    drawHallLight(
-        scene,
-        140,
-        state.leftLight,
-        "left"
-    );
-
-    drawHallLight(
-        scene,
-        1524,
-        state.rightLight,
-        "right"
-    );
-
-    scene.fillStyle =
-        "#151914";
-
-    scene.beginPath();
-
-    scene.moveTo(
-        350,
-        0
-    );
-
-    scene.lineTo(
-        1314,
-        0
-    );
-
-    scene.lineTo(
-        1210,
-        480
-    );
-
-    scene.lineTo(
-        455,
-        480
-    );
-
-    scene.closePath();
-    scene.fill();
-
-    scene.fillStyle =
-        "#161713";
-
-    scene.fillRect(
-        390,
-        500,
-        885,
-        220
-    );
-
-    scene.fillStyle =
-        "#303027";
-
-    scene.fillRect(
-        365,
-        490,
-        935,
-        25
-    );
-
-    scene.fillStyle =
-        "#070a07";
-
-    scene.fillRect(
-        525,
-        305,
-        240,
-        175
-    );
-
-    scene.strokeStyle =
-        "#343d35";
-
-    scene.lineWidth =
-        14;
-
-    scene.strokeRect(
-        525,
-        305,
-        240,
-        175
-    );
-
-    scene.fillStyle =
-        "#2f5730";
-
-    scene.font =
-        "35px VT323";
-
-    scene.fillText(
-        "SECURITY",
-        577,
-        397
-    );
-
-    scene.fillStyle =
-        "#343934";
-
-    scene.font =
-        "100px VT323";
-
-    scene.fillText(
-        "✣",
-        860,
-        470
-    );
-
-    scene.fillStyle =
-        "#aca36e";
-
-    scene.fillRect(
-        1050,
-        530,
-        150,
-        95
-    );
-
-    scene.fillStyle =
-        "#3f3a2a";
-
-    scene.font =
-        "19px VT323";
-
-    scene.fillText(
-        "CHECK",
-        1097,
-        565
-    );
-
-    scene.fillText(
-        "THE CAMS",
-        1080,
-        590
-    );
-
-    scene.restore();
-}
-
-
-function drawHallLight(
-    context,
-    centerX,
-    enabled,
-    side
-) {
-    if (!enabled) {
-        return;
-    }
-
-    const gradient =
-        context.createRadialGradient(
-            centerX,
-            330,
-            20,
-            centerX,
-            330,
-            260
-        );
-
-    gradient.addColorStop(
-        0,
-        "rgba(255,238,160,0.75)"
-    );
-
-    gradient.addColorStop(
-        0.4,
-        "rgba(170,150,75,0.22)"
-    );
-
-    gradient.addColorStop(
-        1,
-        "rgba(0,0,0,0)"
-    );
-
-    context.fillStyle =
-        gradient;
-
-    context.fillRect(
-        side === "left"
-            ? 0
-            : 1260,
-        50,
-        405,
-        590
-    );
-}
-
-
-function drawDoor(
-    side,
-    progress
-) {
-    const width =
-        250;
-
-    const height =
-        520 * progress;
-
-    const worldX =
-        side === "left"
-            ? 0
-            : 1414;
-
-    const x =
-        worldX -
-        state.officePan;
-
-    scene.save();
-
-    scene.fillStyle =
-        "#242924";
-
-    scene.fillRect(
+        8,
+        materials.carpet
+      );
+
+      box(
         x,
-        75,
-        width,
-        height
-    );
+        3,
+        z - 3.4,
+        10.5,
+        6,
+        0.3,
+        materials.wall
+      );
 
-    scene.strokeStyle =
-        "#4b514b";
+      box(
+        x - 5.1,
+        3,
+        z,
+        0.3,
+        6,
+        7,
+        materials.wall
+      );
 
-    scene.lineWidth =
-        5;
+      box(
+        x + 5.1,
+        3,
+        z,
+        0.3,
+        6,
+        7,
+        materials.wall
+      );
 
-    scene.strokeRect(
-        x,
-        75,
-        width,
-        height
-    );
+      for (
+        let station = -1;
+        station <= 1;
+        station++
+      ) {
+        const stationX =
+          x + station * 2.8;
 
-    scene.fillStyle =
-        "#0d100d";
-
-    for (
-        let stripe = 0;
-        stripe < height;
-        stripe += 42
-    ) {
-        scene.fillRect(
-            x,
-            75 + stripe,
-            width,
-            8
+        box(
+          stationX,
+          0.72,
+          z,
+          2.42,
+          1.44,
+          1.18,
+          materials.wood
         );
-    }
 
-    scene.fillStyle =
-        "#626a63";
-
-    scene.font =
-        "23px VT323";
-
-    scene.fillText(
-        "SECURITY",
-        x + 82,
-        115
-    );
-
-    scene.restore();
-}
-
-
-function doorEnemy(side) {
-    return enemies.find((enemy) => {
-        return (
-            !enemy.insideOffice &&
-            enemy.attackSide === side &&
-            enemy.routeIndex ===
-                enemy.route.length - 1
+        box(
+          stationX,
+          1.47,
+          z + 0.02,
+          2.28,
+          0.12,
+          1.08,
+          materials.white
         );
-    });
-}
 
-
-function drawDoorEnemies() {
-    const leftEnemy =
-        doorEnemy("left");
-
-    const rightEnemy =
-        doorEnemy("right");
-
-    if (
-        leftEnemy &&
-        state.leftLight
-    ) {
-        drawEnemySilhouette(
-            145 - state.officePan,
-            310,
-            leftEnemy.name
+        box(
+          stationX,
+          2.45,
+          z + 0.05,
+          0.06,
+          1.9,
+          1.85,
+          materials.glass
         );
-    }
 
-    if (
-        rightEnemy &&
-        state.rightLight
-    ) {
-        drawEnemySilhouette(
-            1515 - state.officePan,
-            310,
-            rightEnemy.name
+        monitor(
+          stationX,
+          2.05,
+          z - 0.38,
+          station === 1
         );
-    }
-}
 
-
-function drawEnemySilhouette(
-    x,
-    y,
-    name
-) {
-    scene.save();
-
-    scene.fillStyle =
-        "rgba(0,0,0,0.94)";
-
-    scene.beginPath();
-
-    scene.arc(
-        x,
-        y,
-        72,
-        0,
-        Math.PI * 2
-    );
-
-    scene.fill();
-
-    scene.fillRect(
-        x - 64,
-        y + 55,
-        128,
-        220
-    );
-
-    scene.fillStyle =
-        "#e8e8dd";
-
-    scene.fillRect(
-        x - 32,
-        y - 12,
-        14,
-        9
-    );
-
-    scene.fillRect(
-        x + 18,
-        y - 12,
-        14,
-        9
-    );
-
-    scene.fillStyle =
-        "#a44545";
-
-    scene.font =
-        "20px VT323";
-
-    scene.textAlign =
-        "center";
-
-    scene.fillText(
-        name.toUpperCase(),
-        x,
-        y + 310
-    );
-
-    scene.restore();
-}
-
-
-/* ========================================================
-   OFFICE UI
-   ======================================================== */
-
-const controls = {
-    leftLight: {
-        x: 38,
-        y: 320,
-        width: 85,
-        height: 60
-    },
-
-    leftDoor: {
-        x: 38,
-        y: 400,
-        width: 85,
-        height: 85
-    },
-
-    rightLight: {
-        x: 1157,
-        y: 320,
-        width: 85,
-        height: 60
-    },
-
-    rightDoor: {
-        x: 1157,
-        y: 400,
-        width: 85,
-        height: 85
-    },
-
-    cameraFlip: {
-        x: 340,
-        y: 660,
-        width: 600,
-        height: 60
-    }
-};
-
-
-function drawOfficeUI() {
-    drawControlButton(
-        controls.leftLight,
-        "LIGHT",
-        state.leftLight
-    );
-
-    drawControlButton(
-        controls.leftDoor,
-        "DOOR",
-        state.leftDoor,
-        true
-    );
-
-    drawControlButton(
-        controls.rightLight,
-        "LIGHT",
-        state.rightLight
-    );
-
-    drawControlButton(
-        controls.rightDoor,
-        "DOOR",
-        state.rightDoor,
-        true
-    );
-
-    ui.fillStyle =
-        inside(
-            controls.cameraFlip.x,
-            controls.cameraFlip.y,
-            controls.cameraFlip.width,
-            controls.cameraFlip.height
-        )
-            ? "rgba(255,255,255,0.25)"
-            : "rgba(255,255,255,0.08)";
-
-    ui.fillRect(
-        controls.cameraFlip.x,
-        controls.cameraFlip.y,
-        controls.cameraFlip.width,
-        controls.cameraFlip.height
-    );
-
-    ui.strokeStyle =
-        "#8a928b";
-
-    ui.strokeRect(
-        controls.cameraFlip.x,
-        controls.cameraFlip.y,
-        controls.cameraFlip.width,
-        controls.cameraFlip.height
-    );
-
-    ui.font =
-        "23px VT323";
-
-    ui.fillStyle =
-        "#d7dbd8";
-
-    centeredText(
-        ui,
-        "OPEN CAMERA MONITOR",
-        699
-    );
-}
-
-
-function drawControlButton(
-    rectangle,
-    label,
-    active,
-    dangerous = false
-) {
-    fillButton(
-        ui,
-        rectangle,
-        active
-    );
-
-    if (active) {
-        ui.fillStyle =
-            dangerous
-                ? "#9f2727"
-                : "#9cff79";
-
-        ui.fillRect(
-            rectangle.x + 8,
-            rectangle.y + 8,
-            rectangle.width - 16,
-            12
+        chair(
+          stationX,
+          z - 1.48,
+          Math.PI
         );
-    }
+      }
 
-    ui.fillStyle =
-        active
-            ? "#ffffff"
-            : "#89918a";
-
-    ui.font =
-        "24px VT323";
-
-    ui.textAlign =
-        "center";
-
-    ui.fillText(
+      sign(
         label,
-        rectangle.x +
-            rectangle.width / 2,
-        rectangle.y +
-            rectangle.height /
-                2 +
-            10
-    );
+        x,
+        4.68,
+        z - 3.2
+      );
 
-    ui.textAlign =
-        "left";
-}
-
-
-/* ========================================================
-   CAMERA VIEW
-   ======================================================== */
-
-const mapPositions = {
-    "1a": [960, 340],
-    "1b": [890, 385],
-    "1c": [1030, 385],
-    "1d": [960, 430],
-
-    "2a": [890, 475],
-    "2b": [820, 430],
-    "2c": [1100, 430],
-    "2d": [1030, 475],
-
-    "3a": [820, 520],
-    "3b": [890, 565],
-    "3d": [1030, 565],
-
-    "1e": [890, 610],
-    "2e": [1030, 610],
-    "3e": [820, 650],
-    "4e": [1100, 650],
-
-    "1f": [960, 665],
-    "2f": [1170, 520]
-};
-
-
-function drawCameraView(now) {
-    const camera =
-        cameraData.find(
-            (item) =>
-                item.id ===
-                state.selectedCamera
-        ) ||
-        cameraData[0];
-
-    const image =
-        assets.cameras[
-            state.selectedCamera
-        ];
-
-    if (image) {
-        scene.drawImage(
-            image,
-            0,
-            0,
-            WIDTH,
-            HEIGHT
-        );
-    } else {
-        drawFallbackCamera(
-            camera
-        );
+      ceilingLight(x, z - 1);
+      ceilingLight(x, z + 2);
     }
 
-    const jammed =
-        now <
-        state.cameraJamUntil;
-
-    const banana =
-        enemies.find(
-            (enemy) =>
-                enemy.id ===
-                "banana"
-        );
-
-    const corrupted =
-        banana &&
-        enemyCamera(banana) ===
-            state.selectedCamera;
-
-    drawStatic(
-        scene,
-        jammed
-            ? 0.55
-            : corrupted
-            ? 0.25
-            : 0.12
-    );
-
-    ui.fillStyle =
-        "#ffffff";
-
-    ui.font =
-        "34px VT323";
-
-    ui.fillText(
-        `CAM ${camera.code}`,
-        35,
-        54
-    );
-
-    ui.font =
-        "25px VT323";
-
-    ui.fillStyle =
-        "#b9beb9";
-
-    ui.fillText(
-        camera.name,
-        35,
-        86
-    );
-
-    if (
-        Math.floor(now / 500) %
-            2 ===
-        0
+    function bathroom(
+      x,
+      z,
+      label,
+      mens
     ) {
-        ui.fillStyle =
-            "#d73d3d";
+      box(
+        x,
+        0.03,
+        z,
+        10,
+        0.08,
+        7.5,
+        materials.floor
+      );
 
-        ui.beginPath();
+      box(
+        x,
+        3,
+        z - 3.5,
+        10,
+        6,
+        0.3,
+        materials.wall
+      );
 
-        ui.arc(
-            625,
-            42,
-            8,
-            0,
-            Math.PI * 2
+      box(
+        x - 4.8,
+        3,
+        z,
+        0.3,
+        6,
+        7,
+        materials.wall
+      );
+
+      box(
+        x + 4.8,
+        3,
+        z,
+        0.3,
+        6,
+        7,
+        materials.wall
+      );
+
+      for (
+        let stall = 0;
+        stall < 3;
+        stall++
+      ) {
+        const stallX =
+          x + 0.25 + stall * 1.45;
+
+        box(
+          stallX,
+          1.42,
+          z - 2.15,
+          1.13,
+          2.84,
+          0.11,
+          materials.dark
         );
 
-        ui.fill();
-
-        ui.fillStyle =
-            "#ffffff";
-
-        ui.font =
-            "22px VT323";
-
-        ui.fillText(
-            "REC",
-            642,
-            49
+        box(
+          stallX - 0.65,
+          1.4,
+          z - 1.48,
+          0.08,
+          2.8,
+          1.55,
+          materials.steel
         );
+      }
+
+      box(
+        x - 2.75,
+        0.85,
+        z - 2.15,
+        2.7,
+        0.25,
+        1,
+        materials.white
+      );
+
+      box(
+        x - 2.75,
+        2.12,
+        z - 3.31,
+        2.85,
+        1.55,
+        0.06,
+        materials.mirror
+      );
+
+      if (mens) {
+        for (
+          let i = 0;
+          i < 3;
+          i++
+        ) {
+          box(
+            x - 3.7 + i * 1.05,
+            0.78,
+            z - 2.72,
+            0.63,
+            1.12,
+            0.42,
+            materials.white
+          );
+        }
+      }
+
+      sign(
+        label,
+        x,
+        4.72,
+        z - 3.3
+      );
+
+      ceilingLight(x, z);
     }
 
-    drawCameraEnemies();
-    drawCameraMap();
-}
+    function vault(x, z) {
+      box(
+        x,
+        0.03,
+        z,
+        11,
+        0.08,
+        10,
+        materials.floor
+      );
 
+      box(
+        x,
+        3,
+        z - 4.2,
+        11,
+        6,
+        0.35,
+        materials.dark
+      );
 
-function drawFallbackCamera(camera) {
-    const gradient =
-        scene.createLinearGradient(
-            0,
-            0,
-            0,
-            HEIGHT
+      for (
+        let row = 0;
+        row < 5;
+        row++
+      ) {
+        for (
+          let column = 0;
+          column < 8;
+          column++
+        ) {
+          const depositX =
+            x - 4.1 +
+            column * 1.17;
+
+          box(
+            depositX,
+            0.55 + row * 0.82,
+            z - 3.92,
+            0.98,
+            0.68,
+            0.12,
+            materials.steel
+          );
+        }
+      }
+
+      cylinder(
+        x,
+        2.3,
+        z - 3.72,
+        2.35,
+        0.36,
+        materials.steel,
+        Math.PI / 2
+      );
+
+      cylinder(
+        x,
+        2.3,
+        z - 3.48,
+        0.72,
+        0.2,
+        materials.wood,
+        Math.PI / 2
+      );
+
+      for (
+        let angle = 0;
+        angle < Math.PI * 2;
+        angle += Math.PI / 3
+      ) {
+        const spoke =
+          box(
+            x +
+              Math.cos(angle) *
+                0.55,
+
+            2.3 +
+              Math.sin(angle) *
+                0.55,
+
+            z - 3.35,
+            0.08,
+            1.15,
+            0.08,
+            materials.chrome
+          );
+
+        spoke.rotation.z = -angle;
+      }
+
+      sign(
+        "BANK SAFE",
+        x,
+        5,
+        z - 4
+      );
+
+      ceilingLight(x, z - 1);
+    }
+
+    function stockRoom(x, z) {
+      box(
+        x,
+        0.03,
+        z,
+        11,
+        0.08,
+        10,
+        materials.carpet
+      );
+
+      box(
+        x,
+        3,
+        z - 4.2,
+        11,
+        6,
+        0.35,
+        materials.dark
+      );
+
+      sign(
+        "STOCK MARKET ROOM",
+        x,
+        5,
+        z - 4
+      );
+
+      for (
+        let row = 0;
+        row < 2;
+        row++
+      ) {
+        for (
+          let desk = 0;
+          desk < 4;
+          desk++
+        ) {
+          const deskX =
+            x - 3.75 +
+            desk * 2.45;
+
+          const deskZ =
+            z - 1.3 +
+            row * 2.5;
+
+          box(
+            deskX,
+            0.75,
+            deskZ,
+            2,
+            0.16,
+            1.15,
+            materials.wood
+          );
+
+          monitor(
+            deskX - 0.46,
+            1.54,
+            deskZ - 0.25,
+            (desk + row) % 2 === 0
+          );
+
+          monitor(
+            deskX + 0.46,
+            1.54,
+            deskZ - 0.25,
+            (desk + row) % 2 !== 0
+          );
+
+          chair(
+            deskX,
+            deskZ + 0.86
+          );
+        }
+      }
+
+      ceilingLight(x, z);
+    }
+
+    function hallway(x, label) {
+      box(
+        x,
+        0.04,
+        1,
+        4,
+        0.08,
+        22,
+        materials.carpet
+      );
+
+      box(
+        x - 2,
+        3,
+        1,
+        0.25,
+        6,
+        22,
+        materials.wall
+      );
+
+      box(
+        x + 2,
+        3,
+        1,
+        0.25,
+        6,
+        22,
+        materials.wall
+      );
+
+      for (
+        let hallZ = -6;
+        hallZ <= 6;
+        hallZ += 6
+      ) {
+        box(
+          x - 1.86,
+          2,
+          hallZ,
+          0.16,
+          4,
+          2.2,
+          materials.wood
         );
 
-    gradient.addColorStop(
-        0,
-        "#182019"
-    );
+        box(
+          x + 1.86,
+          2,
+          hallZ + 2.6,
+          0.16,
+          4,
+          2.2,
+          materials.wood
+        );
+      }
 
-    gradient.addColorStop(
-        0.5,
-        "#0b100c"
-    );
+      sign(
+        label,
+        x,
+        4.5,
+        -9.84
+      );
 
-    gradient.addColorStop(
-        1,
-        "#020302"
-    );
+      ceilingLight(x, -5, 2.5);
+      ceilingLight(x, 1, 2.5);
+      ceilingLight(x, 7, 2.5);
+    }
 
-    scene.fillStyle =
-        gradient;
+    function securityDoor(
+      side,
+      x,
+      z
+    ) {
+      const shutter =
+        new THREE.Group();
 
-    scene.fillRect(
-        0,
-        0,
-        WIDTH,
-        HEIGHT
-    );
+      shutter.position.set(
+        x,
+        4.7,
+        z
+      );
 
-    scene.strokeStyle =
-        "#29342b";
+      scene.add(shutter);
 
-    scene.lineWidth =
-        7;
+      for (
+        let panel = 0;
+        panel < 9;
+        panel++
+      ) {
+        box(
+          0,
+          0.28 + panel * 0.49,
+          0,
+          0.32,
+          0.43,
+          3.45,
+          panel % 2
+            ? materials.steel
+            : materials.chrome,
+          0,
+          shutter
+        );
+      }
 
-    scene.strokeRect(
-        120,
-        120,
-        660,
-        460
-    );
+      box(
+        x,
+        4.45,
+        z,
+        0.72,
+        0.48,
+        4.15,
+        materials.dark
+      );
 
-    scene.fillStyle =
-        "#111711";
+      box(
+        x,
+        2.1,
+        z - 1.92,
+        0.7,
+        4.2,
+        0.36,
+        materials.dark
+      );
 
-    scene.fillRect(
-        170,
-        390,
-        550,
-        150
-    );
+      box(
+        x,
+        2.1,
+        z + 1.92,
+        0.7,
+        4.2,
+        0.36,
+        materials.dark
+      );
 
-    scene.fillStyle =
-        "#354137";
+      sign(
+        side === "left"
+          ? "LEFT SECURITY DOOR"
+          : "RIGHT SECURITY DOOR",
+        x,
+        4.75,
+        z,
+        side === "left"
+          ? -Math.PI / 2
+          : Math.PI / 2,
+        4.2,
+        "#421515"
+      );
 
-    scene.font =
-        "70px VT323";
+      doorMeshes[side] = {
+        shutter,
+        targetY: 4.7
+      };
+    }
 
-    scene.textAlign =
-        "center";
+    function createStickFigure(
+      color
+    ) {
+      const group =
+        new THREE.Group();
 
-    scene.fillText(
-        camera.name.toUpperCase(),
-        450,
-        330
-    );
-
-    scene.textAlign =
-        "left";
-}
-
-
-function drawCameraEnemies() {
-    const present =
-        enemies.filter((enemy) => {
-            return (
-                !enemy.insideOffice &&
-                enemyCamera(enemy) ===
-                    state.selectedCamera
-            );
+      const figureMaterial =
+        new THREE.MeshStandardMaterial({
+          color,
+          roughness: 0.45,
+          metalness: 0.05
         });
 
-    present.forEach(
-        (enemy, index) => {
-            drawEnemySilhouette(
-                350 + index * 180,
-                310,
-                enemy.name
-            );
-        }
-    );
-}
+      const jointMaterial =
+        new THREE.MeshStandardMaterial({
+          color: 0x0a0d0b,
+          roughness: 0.8
+        });
 
+      sphere(
+        0,
+        2.52,
+        0,
+        0.35,
+        figureMaterial,
+        group
+      );
 
-function drawCameraMap() {
-    ui.fillStyle =
-        "rgba(0,0,0,0.72)";
-
-    ui.fillRect(
-        790,
-        290,
-        470,
-        420
-    );
-
-    ui.strokeStyle =
-        "#767e77";
-
-    ui.lineWidth =
-        3;
-
-    ui.strokeRect(
-        790,
-        290,
-        470,
-        420
-    );
-
-    ui.font =
-        "25px VT323";
-
-    ui.fillStyle =
-        "#ffffff";
-
-    ui.fillText(
-        "NEEGY BANK",
-        820,
-        325
-    );
-
-    cameraData.forEach((camera) => {
-        const position =
-            mapPositions[camera.id];
-
-        if (!position) {
-            return;
-        }
-
-        const active =
-            camera.id ===
-            state.selectedCamera;
-
-        ui.fillStyle =
-            active
-                ? "#9cff79"
-                : "#323a33";
-
-        ui.fillRect(
-            position[0],
-            position[1],
-            55,
-            28
+      const body =
+        cylinder(
+          0,
+          1.65,
+          0,
+          0.13,
+          1.42,
+          figureMaterial,
+          0,
+          0,
+          group,
+          12
         );
 
-        ui.strokeStyle =
-            active
-                ? "#ffffff"
-                : "#737b74";
-
-        ui.strokeRect(
-            position[0],
-            position[1],
-            55,
-            28
+      const leftArm =
+        cylinder(
+          -0.36,
+          1.68,
+          0,
+          0.075,
+          1.08,
+          figureMaterial,
+          0,
+          -0.48,
+          group,
+          10
         );
 
-        ui.fillStyle =
-            active
-                ? "#071007"
-                : "#ffffff";
-
-        ui.font =
-            "18px VT323";
-
-        ui.textAlign =
-            "center";
-
-        ui.fillText(
-            camera.code,
-            position[0] + 27,
-            position[1] + 21
-        );
-    });
-
-    ui.textAlign =
-        "left";
-}
-
-
-/* ========================================================
-   MONITOR ANIMATION
-   ======================================================== */
-
-function drawMonitorAnimation() {
-    const progress =
-        state.monitorAnimation;
-
-    if (
-        progress <= 0.01 ||
-        progress >= 0.99
-    ) {
-        return;
-    }
-
-    const monitorHeight =
-        720 * progress;
-
-    ui.fillStyle =
-        "#080a08";
-
-    ui.fillRect(
-        0,
-        HEIGHT - monitorHeight,
-        WIDTH,
-        monitorHeight
-    );
-
-    ui.strokeStyle =
-        "#414841";
-
-    ui.lineWidth =
-        8;
-
-    ui.strokeRect(
-        0,
-        HEIGHT - monitorHeight,
-        WIDTH,
-        monitorHeight
-    );
-
-    drawStatic(
-        ui,
-        0.18
-    );
-}
-
-
-/* ========================================================
-   HUD
-   ======================================================== */
-
-function drawHUD() {
-    const hour =
-        gameData.hourLabels[
-            currentHour()
-        ];
-
-    ui.textAlign =
-        "right";
-
-    ui.fillStyle =
-        "#ffffff";
-
-    ui.font =
-        "42px VT323";
-
-    ui.fillText(
-        hour,
-        1235,
-        52
-    );
-
-    ui.font =
-        "25px VT323";
-
-    ui.fillText(
-        `Night ${state.night}`,
-        1235,
-        83
-    );
-
-    ui.textAlign =
-        "left";
-
-    ui.font =
-        "28px VT323";
-
-    ui.fillText(
-        "Power Left:",
-        35,
-        645
-    );
-
-    ui.fillStyle =
-        state.power <= 20
-            ? "#e64242"
-            : "#ffffff";
-
-    ui.font =
-        "39px VT323";
-
-    ui.fillText(
-        `${Math.ceil(state.power)}%`,
-        177,
-        646
-    );
-
-    let usage = 1;
-
-    usage +=
-        Number(state.cameraUp);
-
-    usage +=
-        Number(state.leftDoor);
-
-    usage +=
-        Number(state.rightDoor);
-
-    usage +=
-        Number(state.leftLight);
-
-    usage +=
-        Number(state.rightLight);
-
-    ui.fillStyle =
-        "#ffffff";
-
-    ui.font =
-        "28px VT323";
-
-    ui.fillText(
-        "Usage:",
-        35,
-        682
-    );
-
-    for (
-        let index = 0;
-        index < 6;
-        index++
-    ) {
-        ui.fillStyle =
-            index < usage
-                ? index >= 4
-                    ? "#d89c32"
-                    : "#74c85b"
-                : "#273027";
-
-        ui.fillRect(
-            125 + index * 25,
-            662,
-            17,
-            22
-        );
-    }
-
-    if (state.message) {
-        ui.textAlign =
-            "center";
-
-        ui.fillStyle =
-            "#8d968f";
-
-        ui.font =
-            "22px VT323";
-
-        ui.fillText(
-            state.message,
-            WIDTH / 2,
-            35
+      const rightArm =
+        cylinder(
+          0.36,
+          1.68,
+          0,
+          0.075,
+          1.08,
+          figureMaterial,
+          0,
+          0.48,
+          group,
+          10
         );
 
-        ui.textAlign =
-            "left";
-    }
-}
-
-
-/* ========================================================
-   JUMPSCARE AND ENDINGS
-   ======================================================== */
-
-function drawJumpscare(now) {
-    const elapsed =
-        now -
-        state.jumpscareStartedAt;
-
-    const shakeX =
-        Math.random() * 40 - 20;
-
-    const shakeY =
-        Math.random() * 40 - 20;
-
-    scene.fillStyle =
-        elapsed % 90 < 45
-            ? "#d6d6cc"
-            : "#060606";
-
-    scene.fillRect(
-        0,
-        0,
-        WIDTH,
-        HEIGHT
-    );
-
-    scene.save();
-
-    scene.translate(
-        WIDTH / 2 + shakeX,
-        HEIGHT / 2 + shakeY
-    );
-
-    const scale =
-        1 +
-        elapsed / 450;
-
-    scene.scale(
-        scale,
-        scale
-    );
-
-    scene.fillStyle =
-        "#050505";
-
-    scene.beginPath();
-
-    scene.arc(
-        0,
-        -40,
-        210,
-        0,
-        Math.PI * 2
-    );
-
-    scene.fill();
-
-    scene.fillStyle =
-        "#ffffff";
-
-    scene.fillRect(
-        -110,
-        -90,
-        60,
-        35
-    );
-
-    scene.fillRect(
-        50,
-        -90,
-        60,
-        35
-    );
-
-    scene.strokeStyle =
-        "#ffffff";
-
-    scene.lineWidth =
-        15;
-
-    scene.beginPath();
-
-    scene.arc(
-        0,
-        30,
-        100,
-        0,
-        Math.PI
-    );
-
-    scene.stroke();
-
-    scene.restore();
-
-    drawStatic(
-        ui,
-        0.45
-    );
-
-    if (elapsed >= 1500) {
-        state.screen =
-            "gameOver";
-    }
-}
-
-
-function drawGameOver() {
-    scene.fillStyle =
-        "black";
-
-    scene.fillRect(
-        0,
-        0,
-        WIDTH,
-        HEIGHT
-    );
-
-    ui.fillStyle =
-        "#bdbdb6";
-
-    ui.font =
-        "85px VT323";
-
-    centeredText(
-        ui,
-        "GAME OVER",
-        330
-    );
-
-    ui.font =
-        "30px VT323";
-
-    ui.fillStyle =
-        "#6f7470";
-
-    centeredText(
-        ui,
-        state.jumpscareEnemy
-            ? `Caught by ${state.jumpscareEnemy.name}`
-            : "Shift failed",
-        385
-    );
-
-    ui.fillStyle =
-        "#ffffff";
-
-    centeredText(
-        ui,
-        "CLICK TO RETURN",
-        500
-    );
-
-    drawStatic(
-        ui,
-        0.12
-    );
-}
-
-
-function drawVictory() {
-    scene.fillStyle =
-        "black";
-
-    scene.fillRect(
-        0,
-        0,
-        WIDTH,
-        HEIGHT
-    );
-
-    ui.fillStyle =
-        "#ffffff";
-
-    ui.font =
-        "145px VT323";
-
-    centeredText(
-        ui,
-        "6 AM",
-        365
-    );
-
-    ui.font =
-        "34px VT323";
-
-    ui.fillStyle =
-        "#9cff79";
-
-    centeredText(
-        ui,
-        "SHIFT COMPLETE",
-        430
-    );
-
-    ui.fillStyle =
-        "#ffffff";
-
-    centeredText(
-        ui,
-        "CLICK TO CONTINUE",
-        550
-    );
-}
-
-
-/* ========================================================
-   INPUT
-   ======================================================== */
-
-function handlePress() {
-    enableAudio();
-
-    if (
-        state.screen === "title"
-    ) {
-        const buttons =
-            titleButtons();
-
-        const selected =
-            buttons.findIndex(
-                (button) =>
-                    inside(
-                        button.x,
-                        button.y,
-                        button.width,
-                        button.height
-                    )
-            );
-
-        if (selected >= 0) {
-            state.menuIndex =
-                selected;
-
-            activateMenuItem();
-        }
-
-        return;
-    }
-
-    if (
-        state.screen ===
-            "gameOver" ||
-        state.screen ===
-            "victory"
-    ) {
-        state.screen =
-            "title";
-
-        return;
-    }
-
-    if (
-        state.screen !== "office" ||
-        state.powerOut
-    ) {
-        return;
-    }
-
-    if (state.cameraUp) {
-        if (
-            inside(
-                controls.cameraFlip.x,
-                controls.cameraFlip.y,
-                controls.cameraFlip.width,
-                controls.cameraFlip.height
-            )
-        ) {
-            lowerCamera();
-
-            return;
-        }
-
-        selectCameraAtPointer();
-
-        return;
-    }
-
-    if (
-        inside(
-            controls.leftDoor.x,
-            controls.leftDoor.y,
-            controls.leftDoor.width,
-            controls.leftDoor.height
-        )
-    ) {
-        state.leftDoor =
-            !state.leftDoor;
-
-        playTone(
-            state.leftDoor
-                ? 95
-                : 130,
-            0.14,
-            0.05
+      const leftLeg =
+        cylinder(
+          -0.2,
+          0.58,
+          0,
+          0.09,
+          1.22,
+          figureMaterial,
+          0,
+          -0.19,
+          group,
+          10
         );
 
-        return;
-    }
-
-    if (
-        inside(
-            controls.rightDoor.x,
-            controls.rightDoor.y,
-            controls.rightDoor.width,
-            controls.rightDoor.height
-        )
-    ) {
-        state.rightDoor =
-            !state.rightDoor;
-
-        playTone(
-            state.rightDoor
-                ? 95
-                : 130,
-            0.14,
-            0.05
+      const rightLeg =
+        cylinder(
+          0.2,
+          0.58,
+          0,
+          0.09,
+          1.22,
+          figureMaterial,
+          0,
+          0.19,
+          group,
+          10
         );
 
-        return;
-    }
-
-    if (
-        inside(
-            controls.leftLight.x,
-            controls.leftLight.y,
-            controls.leftLight.width,
-            controls.leftLight.height
-        )
-    ) {
-        state.leftLight =
-            true;
-
-        playTone(
-            210,
-            0.06,
-            0.025
-        );
-
-        return;
-    }
-
-    if (
-        inside(
-            controls.rightLight.x,
-            controls.rightLight.y,
-            controls.rightLight.width,
-            controls.rightLight.height
-        )
-    ) {
-        state.rightLight =
-            true;
-
-        playTone(
-            210,
-            0.06,
-            0.025
-        );
-
-        return;
-    }
-
-    if (
-        inside(
-            controls.cameraFlip.x,
-            controls.cameraFlip.y,
-            controls.cameraFlip.width,
-            controls.cameraFlip.height
-        )
-    ) {
-        raiseCamera();
-    }
-}
-
-
-function handleRelease() {
-    state.leftLight =
-        false;
-
-    state.rightLight =
-        false;
-}
-
-
-function raiseCamera() {
-    if (
-        performance.now() <
-        state.cameraJamUntil
-    ) {
-        state.message =
-            "CAMERA SYSTEM JAMMED";
-
-        playTone(
-            45,
-            0.12,
-            0.08
-        );
-
-        return;
-    }
-
-    state.cameraUp =
-        true;
-
-    playStaticBurst(
-        0.09,
-        0.04
-    );
-}
-
-
-function lowerCamera() {
-    state.cameraUp =
-        false;
-
-    playStaticBurst(
+      sphere(
+        0,
+        2.52,
+        -0.3,
         0.07,
-        0.035
+        jointMaterial,
+        group
+      );
+
+      group.userData.parts = {
+        body,
+        leftArm,
+        rightArm,
+        leftLeg,
+        rightLeg
+      };
+
+      group.userData.goal =
+        new THREE.Vector3();
+
+      group.userData.room = "";
+      group.visible = false;
+
+      scene.add(group);
+
+      return group;
+    }
+
+    /*
+     * THE ENTIRE BANK CAMERA WORLD
+     * IS BUILT IN THIS JS FILE.
+     */
+
+    box(
+      0,
+      -0.16,
+      0,
+      52,
+      0.3,
+      60,
+      materials.floor
     );
 
-    const intruder =
-        enemies.find(
-            (enemy) =>
-                enemy.insideOffice
-        );
+    box(
+      0,
+      6.08,
+      0,
+      52,
+      0.2,
+      60,
+      materials.ceiling
+    );
 
-    if (intruder) {
-        startJumpscare(
-            intruder
-        );
-    }
-}
+    box(
+      -26,
+      3,
+      0,
+      0.4,
+      6,
+      60,
+      materials.wall
+    );
 
+    box(
+      26,
+      3,
+      0,
+      0.4,
+      6,
+      60,
+      materials.wall
+    );
 
-function selectCameraAtPointer() {
-    if (
-        performance.now() <
-        state.cameraJamUntil
-    ) {
-        return;
-    }
+    box(
+      0,
+      3,
+      -30,
+      52,
+      6,
+      0.4,
+      materials.wall
+    );
+
+    box(
+      -15,
+      3,
+      30,
+      22,
+      6,
+      0.4,
+      materials.wall
+    );
+
+    box(
+      15,
+      3,
+      30,
+      22,
+      6,
+      0.4,
+      materials.wall
+    );
+
+    box(
+      0,
+      5.25,
+      30,
+      8,
+      1.5,
+      0.4,
+      materials.wall
+    );
+
+    box(
+      -2.05,
+      2.15,
+      29.85,
+      3.8,
+      4.3,
+      0.12,
+      materials.glass
+    );
+
+    box(
+      2.05,
+      2.15,
+      29.85,
+      3.8,
+      4.3,
+      0.12,
+      materials.glass
+    );
+
+    box(
+      0,
+      2.15,
+      29.72,
+      0.16,
+      4.3,
+      0.22,
+      materials.steel
+    );
+
+    sign(
+      "NEEGY NATIONAL BANK",
+      0,
+      5.15,
+      29.7,
+      Math.PI,
+      8
+    );
 
     for (
-        const camera of cameraData
+      const atmX of [-6.1, 6.1]
     ) {
-        const position =
-            mapPositions[camera.id];
+      box(
+        atmX,
+        1.55,
+        28.9,
+        2.05,
+        3.1,
+        0.7,
+        materials.dark
+      );
 
-        if (!position) {
-            continue;
-        }
-
-        if (
-            inside(
-                position[0],
-                position[1],
-                55,
-                28
-            )
-        ) {
-            state.selectedCamera =
-                camera.id;
-
-            playStaticBurst(
-                0.05,
-                0.025
-            );
-
-            return;
-        }
+      monitor(
+        atmX,
+        2.05,
+        28.5,
+        false,
+        Math.PI
+      );
     }
 
-    if (
-        pointer.y >= 660
-    ) {
-        lowerCamera();
-    }
-}
-
-
-function activateMenuItem() {
-    playTone(
-        180,
-        0.08,
-        0.04
+    box(
+      0,
+      0.05,
+      18,
+      18,
+      0.1,
+      12,
+      materials.carpet
     );
 
-    switch (
-        state.menuIndex
-    ) {
-        case 0:
-            startNight(1);
-            break;
-
-        case 1:
-            startNight(
-                state.unlockedNight
-            );
-            break;
-
-        case 2:
-            startNight(7);
-            break;
-    }
-}
-
-
-/* ========================================================
-   EVENTS
-   ======================================================== */
-
-window.addEventListener(
-    "resize",
-    resizeGame
-);
-
-
-window.addEventListener(
-    "pointermove",
-    updatePointer
-);
-
-
-window.addEventListener(
-    "pointerdown",
-    (event) => {
-        updatePointer(event);
-
-        pointer.down =
-            true;
-
-        pointer.pressed =
-            true;
-
-        handlePress();
-    }
-);
-
-
-window.addEventListener(
-    "pointerup",
-    (event) => {
-        updatePointer(event);
-
-        pointer.down =
-            false;
-
-        pointer.released =
-            true;
-
-        handleRelease();
-    }
-);
-
-
-window.addEventListener(
-    "pointercancel",
-    () => {
-        pointer.down =
-            false;
-
-        handleRelease();
-    }
-);
-
-
-window.addEventListener(
-    "contextmenu",
-    (event) => {
-        event.preventDefault();
-    }
-);
-
-
-window.addEventListener(
-    "keydown",
-    (event) => {
-        if (
-            event.key.toLowerCase() ===
-            "f"
-        ) {
-            enterFullscreen();
-
-            return;
-        }
-
-        if (
-            state.screen === "title"
-        ) {
-            if (
-                event.key ===
-                "ArrowUp"
-            ) {
-                state.menuIndex =
-                    (
-                        state.menuIndex +
-                        2
-                    ) %
-                    3;
-
-                playTone(
-                    120,
-                    0.04,
-                    0.025
-                );
-            }
-
-            if (
-                event.key ===
-                "ArrowDown"
-            ) {
-                state.menuIndex =
-                    (
-                        state.menuIndex +
-                        1
-                    ) %
-                    3;
-
-                playTone(
-                    140,
-                    0.04,
-                    0.025
-                );
-            }
-
-            if (
-                event.key ===
-                    "Enter" ||
-                event.key ===
-                    " "
-            ) {
-                activateMenuItem();
-            }
-
-            return;
-        }
-
-        if (
-            state.screen !== "office"
-        ) {
-            return;
-        }
-
-        if (
-            event.key === " "
-        ) {
-            event.preventDefault();
-
-            if (state.cameraUp) {
-                lowerCamera();
-            } else {
-                raiseCamera();
-            }
-        }
-
-        if (
-            event.key.toLowerCase() ===
-            "a"
-        ) {
-            state.leftDoor =
-                !state.leftDoor;
-        }
-
-        if (
-            event.key.toLowerCase() ===
-            "d"
-        ) {
-            state.rightDoor =
-                !state.rightDoor;
-        }
-
-        if (
-            event.key.toLowerCase() ===
-            "q"
-        ) {
-            state.leftLight =
-                true;
-        }
-
-        if (
-            event.key.toLowerCase() ===
-            "e"
-        ) {
-            state.rightLight =
-                true;
-        }
-    }
-);
-
-
-window.addEventListener(
-    "keyup",
-    (event) => {
-        if (
-            event.key.toLowerCase() ===
-            "q"
-        ) {
-            state.leftLight =
-                false;
-        }
-
-        if (
-            event.key.toLowerCase() ===
-            "e"
-        ) {
-            state.rightLight =
-                false;
-        }
-    }
-);
-
-
-document.addEventListener(
-    "fullscreenchange",
-    () => {
-        if (
-            !document.fullscreenElement &&
-            state.screen === "office"
-        ) {
-            fullscreenDialog.classList.remove(
-                "hidden"
-            );
-        }
-    }
-);
-
-
-allowAudioButton.addEventListener(
-    "click",
-    enableAudio
-);
-
-
-enterFullscreenButton.addEventListener(
-    "click",
-    enterFullscreen
-);
-
-
-closeFullscreenButton.addEventListener(
-    "click",
-    () => {
-        fullscreenDialog.classList.add(
-            "hidden"
-        );
-    }
-);
-
-
-/* ========================================================
-   RENDER LOOP
-   ======================================================== */
-
-function render(now) {
-    clearCanvases();
-
-    switch (
-        state.screen
-    ) {
-        case "loading":
-            scene.fillStyle =
-                "black";
-
-            scene.fillRect(
-                0,
-                0,
-                WIDTH,
-                HEIGHT
-            );
-
-            ui.fillStyle =
-                "white";
-
-            ui.font =
-                "38px VT323";
-
-            centeredText(
-                ui,
-                "LOADING...",
-                370
-            );
-
-            break;
-
-        case "title":
-            drawTitle(now);
-            break;
-
-        case "nightIntro":
-            drawNightIntro();
-            break;
-
-        case "office":
-            drawOffice(now);
-            break;
-
-        case "jumpscare":
-            drawJumpscare(now);
-            break;
-
-        case "gameOver":
-            drawGameOver();
-            break;
-
-        case "victory":
-            drawVictory();
-            break;
-    }
-}
-
-
-function frame(now) {
-    const delta =
-        Math.min(
-            0.1,
-            (
-                now -
-                lastFrame
-            ) /
-            1000
-        );
-
-    lastFrame =
-        now;
-
-    update(
-        delta,
-        now
+    sign(
+      "MAIN ROOM",
+      0,
+      4.8,
+      12.2
     );
 
-    render(now);
+    chair(-3.2, 18);
+    chair(-1.5, 18);
+    chair(1.5, 18, Math.PI);
+    chair(3.2, 18, Math.PI);
 
-    pointer.pressed =
-        false;
+    box(
+      0,
+      0.8,
+      10,
+      7,
+      1.6,
+      1.5,
+      materials.wood
+    );
 
-    pointer.released =
-        false;
+    box(
+      0,
+      1.65,
+      10.1,
+      6.8,
+      0.12,
+      1.35,
+      materials.white
+    );
 
-    requestAnimationFrame(frame);
-}
+    monitor(
+      -1.5,
+      2.18,
+      9.65
+    );
 
+    monitor(
+      1.5,
+      2.18,
+      9.65,
+      true
+    );
 
-/* ========================================================
-   START
-   ======================================================== */
+    sign(
+      "MAIN DESK",
+      0,
+      1,
+      10.78,
+      Math.PI,
+      4.6
+    );
 
-resizeGame();
-bootGame();
-requestAnimationFrame(frame);
+    tellerRoom(
+      -17,
+      18,
+      "TELLER ROOM 1"
+    );
+
+    tellerRoom(
+      17,
+      18,
+      "TELLER ROOM 2"
+    );
+
+    tellerRoom(
+      -17,
+      4,
+      "TELLER ROOM 3"
+    );
+
+    tellerRoom(
+      17,
+      4,
+      "TELLER ROOM 4"
+    );
+
+    tellerRoom(
+      0,
+      -20,
+      "TELLER ROOM 5"
+    );
+
+    bathroom(
+      -17,
+      -9,
+      "MEN'S BATHROOM",
+      true
+    );
+
+    bathroom(
+      17,
+      -9,
+      "WOMEN'S BATHROOM",
+      false
+    );
+
+    vault(17, -23);
+    stockRoom(-17, -23);
+
+    hallway(
+      -9,
+      "LEFT HALLWAY"
+    );
+
+    hallway(
+      9,
+      "RIGHT HALLWAY"
+    );
+
+    securityDoor(
+      "left",
+      -11,
+      -4
+    );
+
+    securityDoor(
+      "right",
+      11,
+      -4
+    );
+
+    scene.add(
+      new THREE.HemisphereLight(
+        0xeafff2,
+        0x142018,
+        2
+      )
+    );
+
+    const sun =
+      new THREE.DirectionalLight(
+        0xfff5df,
+        2.2
+      );
+
+    sun.position.set(14, 20, 18);
+    sun.castShadow = true;
+
+    sun.shadow.mapSize.set(
+      1024,
+      1024
+    );
+
+    sun.shadow.camera.left = -35;
+    sun.shadow.camera.right = 35;
+    sun.shadow.camera.top = 35;
+    sun.shadow.camera.bottom = -35;
+
+    scene.add(sun);
+
+    const lobbyLight =
+      new THREE.PointLight(
+        0xd8ffe6,
+        65,
+        38
+      );
+
+    lobbyLight.position.set(
+      0,
+      5.2,
+      14
+    );
+
+    scene.add(lobbyLight);
+
+    const rearLight =
+      new THREE.PointLight(
+        0xd9e8ff,
+        55,
+        34
+      );
+
+    rearLight.position.set(
+      0,
+      5.2,
+      -19
+    );
+
+    scene.add(rearLight);
+
+    function show(id) {
+      const found =
+        CAMERA_DEFINITIONS.find(
+          cameraData =>
+            cameraData.id ===
+            String(id).toLowerCase()
+        );
+
+      if (!found) {
+        return false;
+      }
+
+      selected = found;
+
+      camera.position.set(
+        ...found.position
+      );
+
+      camera.lookAt(
+        ...found.target
+      );
+
+      return true;
+    }
+
+    function setDoorState(
+      side,
+      closed
+    ) {
+      const door =
+        doorMeshes[side];
+
+      if (!door) {
+        return;
+      }
+
+      door.targetY =
+        closed ? 0 : 4.7;
+    }
+
+    function syncEnemies(enemies) {
+      const livingIds =
+        new Set(
+          enemies.map(
+            enemy => enemy.id
+          )
+        );
+
+      for (
+        const [id, figure]
+        of figures
+      ) {
+        if (!livingIds.has(id)) {
+          figure.visible = false;
+        }
+      }
+
+      enemies.forEach(
+        (enemy, index) => {
+          let figure =
+            figures.get(enemy.id);
+
+          if (!figure) {
+            figure =
+              createStickFigure(
+                enemy.color ||
+                  0x83ff9c
+              );
+
+            figures.set(
+              enemy.id,
+              figure
+            );
+          }
+
+          if (
+            enemy.insideOffice ||
+            !ROOM_SPOTS[enemy.camera]
+          ) {
+            figure.visible = false;
+            return;
+          }
+
+          figure.visible = true;
+
+          const spots =
+            ROOM_SPOTS[enemy.camera];
+
+          const target =
+            spots[
+              index % spots.length
+            ];
+
+          const goal =
+            figure.userData.goal;
+
+          if (
+            figure.userData.room !==
+            enemy.camera
+          ) {
+            figure.userData.room =
+              enemy.camera;
+
+            figure.position.set(
+              target[0] +
+                (
+                  index % 2
+                    ? -1.5
+                    : 1.5
+                ),
+              target[1],
+              target[2] + 1.8
+            );
+
+            goal.set(
+              target[0],
+              target[1],
+              target[2]
+            );
+          } else {
+            goal.set(
+              target[0],
+              target[1],
+              target[2]
+            );
+          }
+        }
+      );
+    }
+
+    function update(
+      delta,
+      elapsed,
+      enemies
+    ) {
+      syncEnemies(enemies);
+
+      for (
+        const door
+        of Object.values(
+          doorMeshes
+        )
+      ) {
+        door.shutter.position.y +=
+          (
+            door.targetY -
+            door.shutter.position.y
+          ) *
+          Math.min(
+            1,
+            delta * 9
+          );
+      }
+
+      for (
+        const figure
+        of figures.values()
+      ) {
+        if (!figure.visible) {
+          continue;
+        }
+
+        const walking =
+          figure.position
+            .distanceToSquared(
+              figure.userData.goal
+            ) > 0.006;
+
+        figure.position.lerp(
+          figure.userData.goal,
+          Math.min(
+            1,
+            delta * 2.5
+          )
+        );
+
+        const swing =
+          walking
+            ? Math.sin(
+                elapsed * 10
+              ) * 0.28
+            : 0;
+
+        const parts =
+          figure.userData.parts;
+
+        parts.leftArm.rotation.z =
+          -0.48 + swing;
+
+        parts.rightArm.rotation.z =
+          0.48 - swing;
+
+        parts.leftLeg.rotation.z =
+          -0.19 - swing * 0.7;
+
+        parts.rightLeg.rotation.z =
+          0.19 + swing * 0.7;
+
+        figure.rotation.y =
+          Math.sin(
+            elapsed * 0.7 +
+            figure.id
+          ) * 0.05;
+      }
+    }
+
+    show("1a");
+
+    return {
+      scene,
+      camera,
+      cameras: CAMERA_DEFINITIONS,
+      show,
+      update,
+      setDoorState,
+
+      getCurrent() {
+        return {
+          ...selected
+        };
+      }
+    };
+  }
+
+  window.NeegyCameras = {
+    definitions:
+      CAMERA_DEFINITIONS,
+
+    create:
+      createCameraSystem
+  };
+})();
