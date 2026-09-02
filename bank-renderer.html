@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>5 Nights at Neegys Bank Renderer</title>
+  <title>5 Nights at Neegys Bank Cameras</title>
 
   <style>
     * {
@@ -20,17 +20,17 @@
       min-height: 100vh;
       display: grid;
       place-items: center;
-      background: #020303;
-      color: white;
       overflow: hidden;
+      background: #020303;
+      color: #fff;
     }
 
     #app {
+      position: relative;
       width: min(100vw, 1280px);
       aspect-ratio: 16 / 9;
-      position: relative;
       overflow: hidden;
-      background: black;
+      background: #000;
     }
 
     #stage,
@@ -41,7 +41,7 @@
     }
 
     #stage canvas.cctv {
-      filter: brightness(.72) contrast(1.2) saturate(.62);
+      filter: brightness(.76) contrast(1.16) saturate(.72);
     }
 
     #scanlines {
@@ -50,17 +50,17 @@
       pointer-events: none;
       opacity: .2;
       background:
-        radial-gradient(circle at center, transparent 48%, #000 125%),
+        radial-gradient(circle, transparent 42%, #000 130%),
         repeating-linear-gradient(
           transparent 0 3px,
-          rgba(0, 0, 0, .36) 4px
+          rgba(0, 0, 0, .35) 4px
         );
     }
 
     #cameraInfo {
       position: absolute;
-      top: 20px;
-      left: 24px;
+      top: 18px;
+      left: 22px;
       font: 700 26px monospace;
       text-shadow: 2px 2px #000;
     }
@@ -68,32 +68,43 @@
     #cameraName {
       margin-top: 5px;
       color: #b9ffd2;
-      font-size: 18px;
+      font-size: 17px;
+    }
+
+    #status {
+      position: absolute;
+      top: 20px;
+      right: 22px;
+      color: #d7ffe5;
+      font: 700 15px monospace;
+      text-align: right;
+      text-shadow: 2px 2px #000;
     }
 
     #toolbar {
       position: absolute;
       left: 50%;
-      bottom: 18px;
-      width: min(94%, 850px);
+      bottom: 16px;
+      width: min(96%, 1050px);
       transform: translateX(-50%);
       display: grid;
-      grid-template-columns: auto 1fr auto auto;
-      gap: 8px;
+      grid-template-columns:
+        auto minmax(170px, 1fr) auto auto auto auto;
+      gap: 7px;
       padding: 9px;
-      background: rgba(0, 0, 0, .82);
+      background: rgba(0, 0, 0, .84);
       border: 1px solid #718078;
     }
 
     button,
     select {
       min-height: 42px;
-      padding: 0 14px;
+      padding: 0 12px;
       border: 1px solid #718078;
       border-radius: 3px;
       background: #101512;
-      color: white;
-      font: 700 14px monospace;
+      color: #fff;
+      font: 700 13px monospace;
     }
 
     button:hover,
@@ -101,19 +112,37 @@
       background: #1e2a23;
     }
 
-    @media (max-width: 650px) {
+    button.closed {
+      color: #ffb5b5;
+      border-color: #a84f4f;
+    }
+
+    @media (max-width: 760px) {
       #toolbar {
         grid-template-columns: auto 1fr auto;
       }
 
+      #leftDoorButton,
+      #rightDoorButton,
       #saveButton {
-        grid-column: 1 / -1;
+        grid-column: auto;
       }
 
       #cameraInfo {
-        top: 12px;
-        left: 14px;
-        font-size: 19px;
+        top: 10px;
+        left: 12px;
+        font-size: 18px;
+      }
+
+      #status {
+        display: none;
+      }
+
+      button,
+      select {
+        min-height: 36px;
+        padding: 0 7px;
+        font-size: 11px;
       }
     }
   </style>
@@ -122,7 +151,6 @@
 <body>
   <main id="app">
     <div id="stage"></div>
-
     <div id="scanlines"></div>
 
     <div id="cameraInfo">
@@ -130,10 +158,17 @@
       <div id="cameraName"></div>
     </div>
 
+    <div id="status">
+      16 CAMERA NETWORK<br>
+      NEEGY NATIONAL BANK
+    </div>
+
     <div id="toolbar">
       <button id="previousButton">PREV</button>
       <select id="cameraSelect"></select>
       <button id="nextButton">NEXT</button>
+      <button id="leftDoorButton">LEFT: OPEN</button>
+      <button id="rightDoorButton">RIGHT: OPEN</button>
       <button id="saveButton">SAVE PNG</button>
     </div>
   </main>
@@ -141,497 +176,1900 @@
   <script src="https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.min.js"></script>
 
   <script>
-    const WIDTH = 1280;
-    const HEIGHT = 720;
+    (() => {
+      "use strict";
 
-    const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x050706);
-    scene.fog = new THREE.Fog(0x050706, 35, 75);
+      const WIDTH = 1280;
+      const HEIGHT = 720;
 
-    const camera = new THREE.PerspectiveCamera(76, WIDTH / HEIGHT, 0.1, 150);
+      const scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x070908);
+      scene.fog = new THREE.Fog(0x070908, 38, 82);
 
-    const renderer = new THREE.WebGLRenderer({
-      antialias: true,
-      preserveDrawingBuffer: true
-    });
+      const camera = new THREE.PerspectiveCamera(
+        72,
+        WIDTH / HEIGHT,
+        0.1,
+        150
+      );
 
-    renderer.setSize(WIDTH, HEIGHT, false);
-    renderer.setPixelRatio(1);
-    renderer.outputColorSpace = THREE.SRGBColorSpace;
-    renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.22;
-
-    document.querySelector("#stage").append(renderer.domElement);
-    renderer.domElement.classList.add("cctv");
-
-    const standard = (color, options = {}) =>
-      new THREE.MeshStandardMaterial({
-        color,
-        roughness: 0.65,
-        metalness: 0.05,
-        ...options
+      const renderer = new THREE.WebGLRenderer({
+        antialias: true,
+        preserveDrawingBuffer: true
       });
 
-    const materials = {
-      floor: standard(0x9ca39f),
-      carpet: standard(0x172c25),
-      wall: standard(0xe4e4dc),
-      ceiling: standard(0xd5d8d2),
-      dark: standard(0x101412),
-      green: standard(0x155c3c),
-      wood: standard(0x7a5535),
-      steel: standard(0x737b7d, { metalness: 0.72, roughness: 0.25 }),
-      white: standard(0xf2f2ed),
-      black: standard(0x080909),
-      red: standard(0x7f1717),
-      blue: standard(0x183965),
-      glass: standard(0x8ddce3, {
-        transparent: true,
-        opacity: 0.22,
-        roughness: 0.08,
-        metalness: 0.15,
-        depthWrite: false
-      }),
-      light: standard(0xffffff, {
-        emissive: 0xffffff,
-        emissiveIntensity: 4
-      }),
-      screenGreen: standard(0x07110b, {
-        emissive: 0x27ff72,
-        emissiveIntensity: 2.6
-      }),
-      screenRed: standard(0x160707, {
-        emissive: 0xff2828,
-        emissiveIntensity: 2.6
-      })
-    };
+      renderer.setSize(WIDTH, HEIGHT, false);
+      renderer.setPixelRatio(1);
+      renderer.outputColorSpace = THREE.SRGBColorSpace;
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 1.12;
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      renderer.domElement.classList.add("cctv");
 
-    function box(x, y, z, width, height, depth, material, rotationY = 0) {
-      const mesh = new THREE.Mesh(
-        new THREE.BoxGeometry(width, height, depth),
-        material
-      );
+      document.querySelector("#stage").append(renderer.domElement);
 
-      mesh.position.set(x, y, z);
-      mesh.rotation.y = rotationY;
-      scene.add(mesh);
-      return mesh;
-    }
+      function texture(size, paint, repeatX = 1, repeatY = 1) {
+        const canvas = document.createElement("canvas");
 
-    function cylinder(x, y, z, radius, depth, material, rotationX = 0) {
-      const mesh = new THREE.Mesh(
-        new THREE.CylinderGeometry(radius, radius, depth, 48),
-        material
-      );
+        canvas.width = size;
+        canvas.height = size;
 
-      mesh.position.set(x, y, z);
-      mesh.rotation.x = rotationX;
-      scene.add(mesh);
-      return mesh;
-    }
+        paint(canvas.getContext("2d"), size);
 
-    function textTexture(text, background = "#123c2a") {
-      const canvas = document.createElement("canvas");
-      canvas.width = 1024;
-      canvas.height = 256;
+        const result = new THREE.CanvasTexture(canvas);
 
-      const context = canvas.getContext("2d");
-      context.fillStyle = background;
-      context.fillRect(0, 0, canvas.width, canvas.height);
+        result.colorSpace = THREE.SRGBColorSpace;
+        result.wrapS = THREE.RepeatWrapping;
+        result.wrapT = THREE.RepeatWrapping;
+        result.repeat.set(repeatX, repeatY);
+        result.anisotropy = 4;
 
-      let size = 104;
-      context.font = `800 ${size}px Arial`;
-
-      while (context.measureText(text).width > 900 && size > 42) {
-        size -= 4;
-        context.font = `800 ${size}px Arial`;
+        return result;
       }
 
-      context.fillStyle = "#e9fff1";
-      context.textAlign = "center";
-      context.textBaseline = "middle";
-      context.fillText(text, 512, 128);
+      const tileMap = texture(
+        256,
+        (ctx, size) => {
+          ctx.fillStyle = "#aeb4b0";
+          ctx.fillRect(0, 0, size, size);
 
-      const texture = new THREE.CanvasTexture(canvas);
-      texture.colorSpace = THREE.SRGBColorSpace;
-      return texture;
-    }
+          for (let i = 0; i < 1800; i++) {
+            const shade = 142 + Math.random() * 35;
 
-    function sign(text, x, y, z, rotationY = 0, width = 5) {
-      const mesh = new THREE.Mesh(
-        new THREE.PlaneGeometry(width, width / 4),
-        new THREE.MeshBasicMaterial({
-          map: textTexture(text),
-          side: THREE.DoubleSide
+            ctx.fillStyle =
+              `rgba(${shade},${shade + 4},${shade},.08)`;
+
+            ctx.fillRect(
+              Math.random() * size,
+              Math.random() * size,
+              2,
+              2
+            );
+          }
+
+          ctx.strokeStyle = "rgba(45,55,50,.45)";
+          ctx.lineWidth = 3;
+          ctx.strokeRect(1.5, 1.5, size - 3, size - 3);
+        },
+        14,
+        16
+      );
+
+      const carpetMap = texture(
+        256,
+        (ctx, size) => {
+          ctx.fillStyle = "#173027";
+          ctx.fillRect(0, 0, size, size);
+
+          for (let i = 0; i < 5000; i++) {
+            ctx.fillStyle =
+              Math.random() > .5
+                ? "rgba(105,137,121,.08)"
+                : "rgba(0,0,0,.09)";
+
+            ctx.fillRect(
+              Math.random() * size,
+              Math.random() * size,
+              1,
+              2
+            );
+          }
+        },
+        10,
+        10
+      );
+
+      const woodMap = texture(
+        256,
+        (ctx, size) => {
+          ctx.fillStyle = "#745037";
+          ctx.fillRect(0, 0, size, size);
+
+          for (let y = 0; y < size; y += 9) {
+            ctx.strokeStyle =
+              `rgba(38,18,8,${.08 + Math.random() * .1})`;
+
+            ctx.beginPath();
+            ctx.moveTo(0, y + Math.random() * 5);
+            ctx.bezierCurveTo(60, y - 5, 160, y + 9, size, y);
+            ctx.stroke();
+          }
+        },
+        3,
+        3
+      );
+
+      function standard(color, options = {}) {
+        return new THREE.MeshStandardMaterial({
+          color,
+          roughness: .65,
+          metalness: .04,
+          ...options
+        });
+      }
+
+      const materials = {
+        floor: standard(0xffffff, {
+          map: tileMap,
+          roughness: .76
+        }),
+
+        carpet: standard(0xffffff, {
+          map: carpetMap,
+          roughness: .95
+        }),
+
+        wood: standard(0xffffff, {
+          map: woodMap,
+          roughness: .52
+        }),
+
+        wall: standard(0xe2e2da, {
+          roughness: .88
+        }),
+
+        ceiling: standard(0xcfd3ce, {
+          roughness: .9
+        }),
+
+        dark: standard(0x101412, {
+          roughness: .78
+        }),
+
+        green: standard(0x14583a, {
+          roughness: .62
+        }),
+
+        blue: standard(0x1a385e, {
+          roughness: .72
+        }),
+
+        white: standard(0xefefe9, {
+          roughness: .55
+        }),
+
+        porcelain: standard(0xf4f5f0, {
+          roughness: .26
+        }),
+
+        steel: standard(0x727a7c, {
+          metalness: .82,
+          roughness: .22
+        }),
+
+        chrome: standard(0xc3cccd, {
+          metalness: .94,
+          roughness: .12
+        }),
+
+        glass: standard(0x97d8df, {
+          transparent: true,
+          opacity: .22,
+          roughness: .08,
+          metalness: .12,
+          depthWrite: false
+        }),
+
+        mirror: standard(0xc8e3e7, {
+          metalness: .82,
+          roughness: .05
+        }),
+
+        light: standard(0xffffff, {
+          emissive: 0xffffff,
+          emissiveIntensity: 4
+        }),
+
+        screenGreen: standard(0x07110b, {
+          emissive: 0x2dff78,
+          emissiveIntensity: 2.5
+        }),
+
+        screenRed: standard(0x170706, {
+          emissive: 0xff322d,
+          emissiveIntensity: 2.5
+        }),
+
+        warning: standard(0x9a1919, {
+          emissive: 0x4c0505,
+          emissiveIntensity: .7
         })
-      );
+      };
 
-      mesh.position.set(x, y, z);
-      mesh.rotation.y = rotationY;
-      scene.add(mesh);
-    }
-
-    function chair(x, z, rotationY = 0) {
-      box(x, 0.45, z, 1.1, 0.22, 1.1, materials.blue, rotationY);
-      box(
-        x - Math.sin(rotationY) * 0.45,
-        1.05,
-        z - Math.cos(rotationY) * 0.45,
-        1.1,
-        1.15,
-        0.18,
-        materials.blue,
-        rotationY
-      );
-    }
-
-    function monitor(x, y, z, red = false) {
-      box(
+      function box(
         x,
         y,
         z,
-        1.05,
-        0.65,
-        0.12,
-        red ? materials.screenRed : materials.screenGreen
-      );
-    }
+        width,
+        height,
+        depth,
+        material,
+        rotationY = 0,
+        parent = scene
+      ) {
+        const mesh = new THREE.Mesh(
+          new THREE.BoxGeometry(width, height, depth),
+          material
+        );
 
-    function ceilingLight(x, z, width = 4) {
-      box(x, 5.92, z, width, 0.08, 0.65, materials.light);
-    }
+        mesh.position.set(x, y, z);
+        mesh.rotation.y = rotationY;
+        mesh.castShadow = true;
+        mesh.receiveShadow = true;
 
-    function tellerRoom(x, z, label) {
-      box(x, 0.03, z, 10.5, 0.08, 8, materials.carpet);
-      box(x, 3, z - 3.4, 10.5, 6, 0.3, materials.wall);
-      box(x - 5.1, 3, z, 0.3, 6, 7, materials.wall);
-      box(x + 5.1, 3, z, 0.3, 6, 7, materials.wall);
+        parent.add(mesh);
 
-      for (let station = -1; station <= 1; station++) {
-        const stationX = x + station * 2.8;
-
-        box(stationX, 0.7, z, 2.4, 1.4, 1.15, materials.wood);
-        box(stationX, 1.45, z + 0.03, 2.2, 0.16, 1.05, materials.white);
-        monitor(stationX, 2.05, z - 0.35, station === 1);
-        chair(stationX, z - 1.35, Math.PI);
+        return mesh;
       }
 
-      sign(label, x, 4.65, z - 3.2);
-      ceilingLight(x, z - 1);
-      ceilingLight(x, z + 2);
-    }
+      function cylinder(
+        x,
+        y,
+        z,
+        radius,
+        depth,
+        material,
+        rotationX = 0,
+        rotationZ = 0,
+        parent = scene,
+        segments = 32
+      ) {
+        const mesh = new THREE.Mesh(
+          new THREE.CylinderGeometry(
+            radius,
+            radius,
+            depth,
+            segments
+          ),
+          material
+        );
 
-    function bathroom(x, z, label, mensRoom) {
-      box(x, 0.04, z, 10, 0.08, 7.5, materials.floor);
-      box(x, 3, z - 3.5, 10, 6, 0.3, materials.wall);
-      box(x - 4.8, 3, z, 0.3, 6, 7, materials.wall);
-      box(x + 4.8, 3, z, 0.3, 6, 7, materials.wall);
+        mesh.position.set(x, y, z);
+        mesh.rotation.x = rotationX;
+        mesh.rotation.z = rotationZ;
+        mesh.castShadow = true;
+        mesh.receiveShadow = true;
 
-      for (let stall = 0; stall < 3; stall++) {
-        const stallX = x + 0.2 + stall * 1.45;
-        box(stallX, 1.3, z - 2.25, 1.15, 2.6, 0.12, materials.dark);
-        box(stallX - 0.65, 1.3, z - 1.5, 0.1, 2.6, 1.6, materials.steel);
+        parent.add(mesh);
+
+        return mesh;
       }
 
-      box(x - 2.7, 0.85, z - 2.3, 2.6, 0.25, 1, materials.white);
-      box(x - 2.7, 2.05, z - 3.22, 2.7, 1.5, 0.08, materials.glass);
+      function sphere(
+        x,
+        y,
+        z,
+        radius,
+        material,
+        parent = scene
+      ) {
+        const mesh = new THREE.Mesh(
+          new THREE.SphereGeometry(radius, 20, 14),
+          material
+        );
 
-      if (mensRoom) {
-        for (let item = 0; item < 3; item++) {
-          box(
-            x - 3.55 + item * 1.05,
-            0.8,
-            z - 2.6,
-            0.65,
-            1.15,
-            0.45,
-            materials.white
-          );
+        mesh.position.set(x, y, z);
+        mesh.castShadow = true;
+
+        parent.add(mesh);
+
+        return mesh;
+      }
+
+      function textTexture(text, background = "#123c2a") {
+        const canvas = document.createElement("canvas");
+
+        canvas.width = 1024;
+        canvas.height = 256;
+
+        const ctx = canvas.getContext("2d");
+
+        ctx.fillStyle = background;
+        ctx.fillRect(0, 0, 1024, 256);
+
+        let fontSize = 104;
+
+        ctx.font = `800 ${fontSize}px Arial`;
+
+        while (
+          ctx.measureText(text).width > 900 &&
+          fontSize > 40
+        ) {
+          fontSize -= 4;
+          ctx.font = `800 ${fontSize}px Arial`;
         }
+
+        ctx.fillStyle = "#e9fff1";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(text, 512, 128);
+
+        const result = new THREE.CanvasTexture(canvas);
+        result.colorSpace = THREE.SRGBColorSpace;
+
+        return result;
       }
 
-      sign(label, x, 4.7, z - 3.3);
-      ceilingLight(x, z);
-    }
+      function sign(
+        text,
+        x,
+        y,
+        z,
+        rotationY = 0,
+        width = 5,
+        background
+      ) {
+        const material = new THREE.MeshBasicMaterial({
+          map: textTexture(text, background),
+          side: THREE.DoubleSide
+        });
 
-    function createVault(x, z) {
-      box(x, 0.03, z, 11, 0.08, 10, materials.floor);
-      box(x, 3, z - 4.2, 11, 6, 0.35, materials.dark);
+        const mesh = new THREE.Mesh(
+          new THREE.PlaneGeometry(width, width / 4),
+          material
+        );
 
-      for (let row = 0; row < 5; row++) {
-        for (let column = 0; column < 4; column++) {
-          box(
-            x - 4.3 + column * 1.15,
-            0.55 + row * 0.82,
-            z - 3.92,
-            0.98,
-            0.68,
-            0.12,
-            materials.steel
-          );
+        mesh.position.set(x, y, z);
+        mesh.rotation.y = rotationY;
 
-          box(
-            x + 1.1 + column * 1.15,
-            0.55 + row * 0.82,
-            z - 3.92,
-            0.98,
-            0.68,
-            0.12,
-            materials.steel
-          );
-        }
+        scene.add(mesh);
+
+        return mesh;
       }
 
-      cylinder(x, 2.3, z - 3.72, 2.35, 0.35, materials.steel, Math.PI / 2);
-      cylinder(x, 2.3, z - 3.48, 0.72, 0.18, materials.wood, Math.PI / 2);
-
-      sign("BANK SAFE", x, 5, z - 4);
-      ceilingLight(x, z - 1);
-    }
-
-    function createStockRoom(x, z) {
-      box(x, 0.03, z, 11, 0.08, 10, materials.carpet);
-      box(x, 3, z - 4.2, 11, 6, 0.35, materials.dark);
-      sign("STOCK MARKET ROOM", x, 5, z - 4);
-
-      for (let row = 0; row < 2; row++) {
-        for (let desk = 0; desk < 4; desk++) {
-          const deskX = x - 3.75 + desk * 2.45;
-          const deskZ = z - 1.3 + row * 2.5;
-
-          box(deskX, 0.75, deskZ, 2, 0.18, 1.15, materials.wood);
-          monitor(deskX - 0.45, 1.45, deskZ - 0.25, (desk + row) % 2 === 0);
-          monitor(deskX + 0.45, 1.45, deskZ - 0.25, (desk + row) % 2 !== 0);
-          chair(deskX, deskZ + 0.85);
-        }
-      }
-
-      ceilingLight(x, z);
-    }
-
-    function createHallway(x, label, side) {
-      box(x, 0.04, 1, 4, 0.08, 22, materials.carpet);
-      box(x + side * 2, 3, 1, 0.25, 6, 22, materials.wall);
-      box(x - side * 2, 3, 1, 0.25, 6, 22, materials.wall);
-
-      for (let door = -6; door <= 6; door += 6) {
+      function ceilingLight(x, z, width = 4) {
         box(
-          x + side * 1.86,
-          2,
-          door,
-          0.16,
-          4,
-          2.2,
-          materials.wood
+          x,
+          5.9,
+          z,
+          width,
+          .08,
+          .65,
+          materials.light
         );
       }
 
-      sign(label, x, 4.5, -9.85);
-      ceilingLight(x, -5, 2.5);
-      ceilingLight(x, 1, 2.5);
-      ceilingLight(x, 7, 2.5);
-    }
+      function chair(
+        x,
+        z,
+        rotationY = 0,
+        color = materials.blue
+      ) {
+        const group = new THREE.Group();
 
-    function createOffice() {
-      box(0, 0.04, -5.5, 8, 0.08, 7, materials.carpet);
-      box(0, 3, -8.9, 8, 6, 0.3, materials.wall);
-      box(-3.9, 3, -5.5, 0.3, 6, 7, materials.glass);
-      box(3.9, 3, -5.5, 0.3, 6, 7, materials.glass);
+        group.position.set(x, 0, z);
+        group.rotation.y = rotationY;
 
-      box(0, 2, -2.05, 2.7, 4, 0.25, materials.dark);
-      sign("OFFICE LOCKED", 0, 3.6, -1.9);
+        scene.add(group);
 
-      box(0, 0.75, -6.4, 4.5, 0.18, 2, materials.wood);
-      monitor(0, 1.55, -6.75);
-      chair(0, -7.6, Math.PI);
-      ceilingLight(0, -5.5);
-    }
+        box(
+          0,
+          .56,
+          0,
+          1.05,
+          .2,
+          1,
+          color,
+          0,
+          group
+        );
 
-    function createDoor(x, label, side) {
-      box(x, 2.1, -4, 0.4, 4.2, 3.2, materials.steel);
-      sign(label, x - side * 0.23, 4.35, -4, side * Math.PI / 2, 3.3);
-      box(x - side * 0.24, 2.1, -4, 0.12, 0.22, 2.1, materials.red);
-    }
+        box(
+          0,
+          1.15,
+          -.43,
+          1.05,
+          1.18,
+          .16,
+          color,
+          0,
+          group
+        );
 
-    // Bank shell
-    box(0, -0.16, 0, 52, 0.3, 60, materials.floor);
-    box(0, 6.08, 0, 52, 0.2, 60, materials.ceiling);
-    box(-26, 3, 0, 0.4, 6, 60, materials.wall);
-    box(26, 3, 0, 0.4, 6, 60, materials.wall);
-    box(0, 3, -30, 52, 6, 0.4, materials.wall);
-
-    // Front wall with entrance opening
-    box(-15, 3, 30, 22, 6, 0.4, materials.wall);
-    box(15, 3, 30, 22, 6, 0.4, materials.wall);
-    box(0, 5.25, 30, 8, 1.5, 0.4, materials.wall);
-
-    box(-2.05, 2.15, 29.85, 3.8, 4.3, 0.12, materials.glass);
-    box(2.05, 2.15, 29.85, 3.8, 4.3, 0.12, materials.glass);
-    box(0, 2.15, 29.72, 0.16, 4.3, 0.22, materials.steel);
-
-    sign("NEEGY NATIONAL BANK", 0, 5.15, 29.7, Math.PI, 8);
-
-    // Main lobby
-    box(0, 0.05, 18, 18, 0.1, 12, materials.carpet);
-    sign("MAIN ROOM", 0, 4.8, 12.2);
-
-    chair(-3.2, 18);
-    chair(-1.5, 18);
-    chair(1.5, 18, Math.PI);
-    chair(3.2, 18, Math.PI);
-
-    // Main desk
-    box(0, 0.8, 10, 7, 1.6, 1.5, materials.wood);
-    box(0, 1.65, 10.1, 6.8, 0.12, 1.35, materials.white);
-    monitor(-1.5, 2.15, 9.65);
-    monitor(1.5, 2.15, 9.65, true);
-    sign("MAIN DESK", 0, 1, 10.78, Math.PI, 4.6);
-
-    // Room creation
-    tellerRoom(-17, 18, "TELLER ROOM 1");
-    tellerRoom(17, 18, "TELLER ROOM 2");
-    tellerRoom(-17, 4, "TELLER ROOM 3");
-    tellerRoom(17, 4, "TELLER ROOM 4");
-    tellerRoom(0, -20, "TELLER ROOM 5");
-
-    bathroom(-17, -9, "MEN'S BATHROOM", true);
-    bathroom(17, -9, "WOMEN'S BATHROOM", false);
-
-    createVault(17, -23);
-    createStockRoom(-17, -23);
-
-    createHallway(-9, "LEFT HALLWAY", -1);
-    createHallway(9, "RIGHT HALLWAY", 1);
-
-    createOffice();
-    createDoor(-11, "LEFT DOOR", -1);
-    createDoor(11, "RIGHT DOOR", 1);
-
-    // Lighting
-    scene.add(new THREE.HemisphereLight(0xeafff2, 0x17201b, 2.5));
-
-    const keyLight = new THREE.DirectionalLight(0xffffff, 2.2);
-    keyLight.position.set(12, 18, 20);
-    scene.add(keyLight);
-
-    const lobbyLight = new THREE.PointLight(0xd8ffe6, 85, 38);
-    lobbyLight.position.set(0, 5, 14);
-    scene.add(lobbyLight);
-
-    const rearLight = new THREE.PointLight(0xd9e8ff, 70, 32);
-    rearLight.position.set(0, 5, -18);
-    scene.add(rearLight);
-
-    const CAMERAS = [
-      { id: "1A", name: "Bank Safe", position: [17, 4.7, -16], target: [17, 1.8, -23] },
-      { id: "1B", name: "Teller Room 1", position: [-17, 4.7, 22.4], target: [-17, 1.5, 17] },
-      { id: "1C", name: "Main Entrance", position: [-7, 4.9, 24], target: [0, 1.8, 29.5] },
-      { id: "1D", name: "Main Room", position: [-7, 5, 23], target: [0, 1.3, 17] },
-      { id: "2A", name: "Teller Room 2", position: [17, 4.7, 22.4], target: [17, 1.5, 17] },
-      { id: "2B", name: "Men's Bathroom", position: [-17, 4.5, -4.8], target: [-17, 1.3, -10] },
-      { id: "2C", name: "Women's Bathroom", position: [17, 4.5, -4.8], target: [17, 1.3, -10] },
-      { id: "3A", name: "Teller Room 3", position: [-17, 4.7, 8.3], target: [-17, 1.5, 3] },
-      { id: "3B", name: "Stock Market Room", position: [-17, 4.7, -16], target: [-17, 1.5, -23] },
-      { id: "3D", name: "Teller Room 4", position: [17, 4.7, 8.3], target: [17, 1.5, 3] },
-      { id: "2D", name: "Main Desk", position: [-6, 4.4, 15], target: [0, 1.5, 10] },
-      { id: "1E", name: "Left Hallway", position: [-9, 4.8, 10], target: [-9, 1.5, -9] },
-      { id: "2E", name: "Right Hallway", position: [9, 4.8, 10], target: [9, 1.5, -9] },
-      { id: "3E", name: "Left Door", position: [-5, 4, -1], target: [-11, 1.9, -4] },
-      { id: "4E", name: "Right Door", position: [5, 4, -1], target: [11, 1.9, -4] },
-      { id: "1F", name: "Office, Locked", position: [0, 4.2, 2], target: [0, 1.9, -2] },
-      { id: "2F", name: "Teller Room 5", position: [0, 4.7, -15], target: [0, 1.5, -21] }
-    ];
-
-    const select = document.querySelector("#cameraSelect");
-    const cameraId = document.querySelector("#cameraId");
-    const cameraName = document.querySelector("#cameraName");
-
-    let currentCamera = 0;
-
-    CAMERAS.forEach((item, index) => {
-      const option = document.createElement("option");
-      option.value = index;
-      option.textContent = `CAM ${item.id} · ${item.name}`;
-      select.append(option);
-    });
-
-    function showCamera(index) {
-      currentCamera = (index + CAMERAS.length) % CAMERAS.length;
-
-      const selected = CAMERAS[currentCamera];
-
-      camera.position.set(...selected.position);
-      camera.lookAt(...selected.target);
-
-      select.value = currentCamera;
-      cameraId.textContent = `CAM ${selected.id}`;
-      cameraName.textContent = selected.name.toUpperCase();
-
-      renderer.render(scene, camera);
-    }
-
-    function saveCameraImage() {
-      renderer.render(scene, camera);
-
-      const selected = CAMERAS[currentCamera];
-      const output = document.createElement("canvas");
-      output.width = WIDTH;
-      output.height = HEIGHT;
-
-      const context = output.getContext("2d");
-
-      context.filter = "brightness(72%) contrast(120%) saturate(62%)";
-      context.drawImage(renderer.domElement, 0, 0, WIDTH, HEIGHT);
-      context.filter = "none";
-
-      context.fillStyle = "rgba(0,0,0,.18)";
-
-      for (let y = 0; y < HEIGHT; y += 4) {
-        context.fillRect(0, y, WIDTH, 1);
+        for (const sideX of [-.38, .38]) {
+          for (const sideZ of [-.34, .34]) {
+            cylinder(
+              sideX,
+              .27,
+              sideZ,
+              .055,
+              .52,
+              materials.chrome,
+              0,
+              0,
+              group,
+              12
+            );
+          }
+        }
       }
 
-      context.fillStyle = "rgba(0,0,0,.55)";
-      context.fillRect(0, 0, WIDTH, 72);
-      context.fillRect(0, HEIGHT - 54, WIDTH, 54);
+      function monitor(
+        x,
+        y,
+        z,
+        red = false,
+        rotationY = 0,
+        parent = scene
+      ) {
+        const group = new THREE.Group();
 
-      context.font = "bold 31px monospace";
-      context.fillStyle = "#ffffff";
-      context.fillText(`CAM ${selected.id}`, 28, 43);
+        group.position.set(x, y, z);
+        group.rotation.y = rotationY;
 
-      context.font = "bold 21px monospace";
-      context.fillStyle = "#b9ffd2";
-      context.fillText(selected.name.toUpperCase(), 190, 42);
+        parent.add(group);
 
-      context.font = "18px monospace";
-      context.fillStyle = "#ffffff";
-      context.fillText("NIGHT 1   12:00 AM", 28, HEIGHT - 20);
+        box(
+          0,
+          0,
+          0,
+          1.14,
+          .74,
+          .12,
+          materials.dark,
+          0,
+          group
+        );
 
-      output.toBlob(blob => {
-        const link = document.createElement("a");
-        link.href = URL.createObjectURL(blob);
-        link.download = `${selected.id.toLowerCase()}.png`;
-        link.click();
-        URL.revokeObjectURL(link.href);
+        box(
+          0,
+          0,
+          .066,
+          .96,
+          .57,
+          .025,
+          red
+            ? materials.screenRed
+            : materials.screenGreen,
+          0,
+          group
+        );
+
+        cylinder(
+          0,
+          -.48,
+          0,
+          .055,
+          .55,
+          materials.chrome,
+          0,
+          0,
+          group,
+          12
+        );
+
+        box(
+          0,
+          -.76,
+          0,
+          .52,
+          .06,
+          .38,
+          materials.chrome,
+          0,
+          group
+        );
+      }
+
+      function plant(x, z) {
+        cylinder(
+          x,
+          .35,
+          z,
+          .38,
+          .7,
+          materials.dark
+        );
+
+        cylinder(
+          x,
+          1.1,
+          z,
+          .09,
+          1.25,
+          materials.wood
+        );
+
+        sphere(
+          x,
+          1.85,
+          z,
+          .76,
+          materials.green
+        );
+      }
+
+      function tellerRoom(x, z, label) {
+        box(
+          x,
+          .03,
+          z,
+          10.5,
+          .08,
+          8,
+          materials.carpet
+        );
+
+        box(
+          x,
+          3,
+          z - 3.4,
+          10.5,
+          6,
+          .3,
+          materials.wall
+        );
+
+        box(
+          x - 5.1,
+          3,
+          z,
+          .3,
+          6,
+          7,
+          materials.wall
+        );
+
+        box(
+          x + 5.1,
+          3,
+          z,
+          .3,
+          6,
+          7,
+          materials.wall
+        );
+
+        for (
+          let station = -1;
+          station <= 1;
+          station++
+        ) {
+          const stationX = x + station * 2.8;
+
+          box(
+            stationX,
+            .72,
+            z,
+            2.42,
+            1.44,
+            1.18,
+            materials.wood
+          );
+
+          box(
+            stationX,
+            1.47,
+            z + .02,
+            2.28,
+            .12,
+            1.08,
+            materials.white
+          );
+
+          box(
+            stationX,
+            2.45,
+            z + .05,
+            .06,
+            1.9,
+            1.85,
+            materials.glass
+          );
+
+          monitor(
+            stationX,
+            2.05,
+            z - .38,
+            station === 1
+          );
+
+          chair(
+            stationX,
+            z - 1.48,
+            Math.PI
+          );
+        }
+
+        sign(label, x, 4.68, z - 3.2);
+        ceilingLight(x, z - 1);
+        ceilingLight(x, z + 2);
+      }
+
+      function bathroom(x, z, label, mensRoom) {
+        box(
+          x,
+          .03,
+          z,
+          10,
+          .08,
+          7.5,
+          materials.floor
+        );
+
+        box(
+          x,
+          3,
+          z - 3.5,
+          10,
+          6,
+          .3,
+          materials.wall
+        );
+
+        box(
+          x - 4.8,
+          3,
+          z,
+          .3,
+          6,
+          7,
+          materials.wall
+        );
+
+        box(
+          x + 4.8,
+          3,
+          z,
+          .3,
+          6,
+          7,
+          materials.wall
+        );
+
+        for (let stall = 0; stall < 3; stall++) {
+          const stallX = x + .25 + stall * 1.45;
+
+          box(
+            stallX,
+            1.42,
+            z - 2.15,
+            1.13,
+            2.84,
+            .11,
+            materials.dark
+          );
+
+          box(
+            stallX - .65,
+            1.4,
+            z - 1.48,
+            .08,
+            2.8,
+            1.55,
+            materials.steel
+          );
+
+          if (!mensRoom) {
+            cylinder(
+              stallX,
+              .38,
+              z - 2.55,
+              .31,
+              .46,
+              materials.porcelain
+            );
+          }
+        }
+
+        box(
+          x - 2.75,
+          .85,
+          z - 2.15,
+          2.7,
+          .25,
+          1,
+          materials.white
+        );
+
+        cylinder(
+          x - 3.35,
+          .96,
+          z - 2.1,
+          .29,
+          .12,
+          materials.porcelain
+        );
+
+        cylinder(
+          x - 2.2,
+          .96,
+          z - 2.1,
+          .29,
+          .12,
+          materials.porcelain
+        );
+
+        box(
+          x - 2.75,
+          2.12,
+          z - 3.31,
+          2.85,
+          1.55,
+          .06,
+          materials.mirror
+        );
+
+        if (mensRoom) {
+          for (let i = 0; i < 3; i++) {
+            box(
+              x - 3.7 + i * 1.05,
+              .78,
+              z - 2.72,
+              .63,
+              1.12,
+              .42,
+              materials.porcelain
+            );
+          }
+        }
+
+        sign(label, x, 4.72, z - 3.3);
+        ceilingLight(x, z);
+      }
+
+      function createVault(x, z) {
+        box(
+          x,
+          .03,
+          z,
+          11,
+          .08,
+          10,
+          materials.floor
+        );
+
+        box(
+          x,
+          3,
+          z - 4.2,
+          11,
+          6,
+          .35,
+          materials.dark
+        );
+
+        for (let row = 0; row < 5; row++) {
+          for (let column = 0; column < 4; column++) {
+            for (const offset of [-4.3, 1.1]) {
+              const boxX =
+                x + offset + column * 1.15;
+
+              box(
+                boxX,
+                .55 + row * .82,
+                z - 3.92,
+                .98,
+                .68,
+                .12,
+                materials.steel
+              );
+
+              cylinder(
+                boxX + .31,
+                .55 + row * .82,
+                z - 3.83,
+                .035,
+                .04,
+                materials.chrome,
+                Math.PI / 2
+              );
+            }
+          }
+        }
+
+        cylinder(
+          x,
+          2.3,
+          z - 3.72,
+          2.36,
+          .36,
+          materials.steel,
+          Math.PI / 2
+        );
+
+        cylinder(
+          x,
+          2.3,
+          z - 3.48,
+          .72,
+          .2,
+          materials.wood,
+          Math.PI / 2
+        );
+
+        for (
+          let angle = 0;
+          angle < Math.PI * 2;
+          angle += Math.PI / 3
+        ) {
+          const spoke = box(
+            x + Math.cos(angle) * .55,
+            2.3 + Math.sin(angle) * .55,
+            z - 3.35,
+            .08,
+            1.15,
+            .08,
+            materials.chrome
+          );
+
+          spoke.rotation.z = -angle;
+        }
+
+        sign("BANK SAFE", x, 5, z - 4);
+        ceilingLight(x, z - 1);
+      }
+
+      function createStockRoom(x, z) {
+        box(
+          x,
+          .03,
+          z,
+          11,
+          .08,
+          10,
+          materials.carpet
+        );
+
+        box(
+          x,
+          3,
+          z - 4.2,
+          11,
+          6,
+          .35,
+          materials.dark
+        );
+
+        sign(
+          "STOCK MARKET ROOM",
+          x,
+          5,
+          z - 4
+        );
+
+        for (let row = 0; row < 2; row++) {
+          for (let desk = 0; desk < 4; desk++) {
+            const deskX =
+              x - 3.75 + desk * 2.45;
+
+            const deskZ =
+              z - 1.3 + row * 2.5;
+
+            box(
+              deskX,
+              .75,
+              deskZ,
+              2,
+              .16,
+              1.15,
+              materials.wood
+            );
+
+            monitor(
+              deskX - .46,
+              1.54,
+              deskZ - .25,
+              (desk + row) % 2 === 0
+            );
+
+            monitor(
+              deskX + .46,
+              1.54,
+              deskZ - .25,
+              (desk + row) % 2 !== 0
+            );
+
+            chair(
+              deskX,
+              deskZ + .86
+            );
+          }
+        }
+
+        ceilingLight(x, z);
+      }
+
+      function createHallway(x, label) {
+        box(
+          x,
+          .04,
+          1,
+          4,
+          .08,
+          22,
+          materials.carpet
+        );
+
+        box(
+          x - 2,
+          3,
+          1,
+          .25,
+          6,
+          22,
+          materials.wall
+        );
+
+        box(
+          x + 2,
+          3,
+          1,
+          .25,
+          6,
+          22,
+          materials.wall
+        );
+
+        for (
+          let hallZ = -6;
+          hallZ <= 6;
+          hallZ += 6
+        ) {
+          box(
+            x - 1.86,
+            2,
+            hallZ,
+            .16,
+            4,
+            2.2,
+            materials.wood
+          );
+
+          box(
+            x + 1.86,
+            2,
+            hallZ + 2.6,
+            .16,
+            4,
+            2.2,
+            materials.wood
+          );
+        }
+
+        sign(label, x, 4.5, -9.84);
+
+        ceilingLight(x, -5, 2.5);
+        ceilingLight(x, 1, 2.5);
+        ceilingLight(x, 7, 2.5);
+      }
+
+      const doors = {};
+
+      function createBankDoor(side, x, z) {
+        const shutter = new THREE.Group();
+
+        shutter.position.set(x, 4.7, z);
+        scene.add(shutter);
+
+        for (let panel = 0; panel < 9; panel++) {
+          box(
+            0,
+            .28 + panel * .49,
+            0,
+            .32,
+            .43,
+            3.45,
+            panel % 2
+              ? materials.steel
+              : materials.chrome,
+            0,
+            shutter
+          );
+        }
+
+        box(
+          x,
+          4.45,
+          z,
+          .72,
+          .48,
+          4.15,
+          materials.dark
+        );
+
+        box(
+          x,
+          2.1,
+          z - 1.92,
+          .7,
+          4.2,
+          .36,
+          materials.dark
+        );
+
+        box(
+          x,
+          2.1,
+          z + 1.92,
+          .7,
+          4.2,
+          .36,
+          materials.dark
+        );
+
+        box(
+          x - side * .42,
+          2.15,
+          z + 2.28,
+          .18,
+          .9,
+          .55,
+          materials.dark
+        );
+
+        const statusLight = sphere(
+          x - side * .54,
+          2.38,
+          z + 2.28,
+          .12,
+          materials.screenGreen
+        );
+
+        sign(
+          side < 0
+            ? "LEFT SECURITY DOOR"
+            : "RIGHT SECURITY DOOR",
+          x - side * .38,
+          4.75,
+          z,
+          side * Math.PI / 2,
+          4.2,
+          "#421515"
+        );
+
+        const name =
+          side < 0 ? "left" : "right";
+
+        doors[name] = {
+          shutter,
+          status: statusLight,
+          closed: false,
+          targetY: 4.7
+        };
+      }
+
+      /* BANK BUILDING */
+
+      box(
+        0,
+        -.16,
+        0,
+        52,
+        .3,
+        60,
+        materials.floor
+      );
+
+      box(
+        0,
+        6.08,
+        0,
+        52,
+        .2,
+        60,
+        materials.ceiling
+      );
+
+      box(
+        -26,
+        3,
+        0,
+        .4,
+        6,
+        60,
+        materials.wall
+      );
+
+      box(
+        26,
+        3,
+        0,
+        .4,
+        6,
+        60,
+        materials.wall
+      );
+
+      box(
+        0,
+        3,
+        -30,
+        52,
+        6,
+        .4,
+        materials.wall
+      );
+
+      box(
+        -15,
+        3,
+        30,
+        22,
+        6,
+        .4,
+        materials.wall
+      );
+
+      box(
+        15,
+        3,
+        30,
+        22,
+        6,
+        .4,
+        materials.wall
+      );
+
+      box(
+        0,
+        5.25,
+        30,
+        8,
+        1.5,
+        .4,
+        materials.wall
+      );
+
+      box(
+        -2.05,
+        2.15,
+        29.85,
+        3.8,
+        4.3,
+        .12,
+        materials.glass
+      );
+
+      box(
+        2.05,
+        2.15,
+        29.85,
+        3.8,
+        4.3,
+        .12,
+        materials.glass
+      );
+
+      box(
+        0,
+        2.15,
+        29.72,
+        .16,
+        4.3,
+        .22,
+        materials.steel
+      );
+
+      sign(
+        "NEEGY NATIONAL BANK",
+        0,
+        5.15,
+        29.7,
+        Math.PI,
+        8
+      );
+
+      for (const atmX of [-6.1, 6.1]) {
+        box(
+          atmX,
+          1.55,
+          28.9,
+          2.05,
+          3.1,
+          .7,
+          materials.dark
+        );
+
+        monitor(
+          atmX,
+          2.05,
+          28.5,
+          false,
+          Math.PI
+        );
+      }
+
+      /* MAIN ROOM */
+
+      box(
+        0,
+        .05,
+        18,
+        18,
+        .1,
+        12,
+        materials.carpet
+      );
+
+      sign(
+        "MAIN ROOM",
+        0,
+        4.8,
+        12.2
+      );
+
+      chair(-3.2, 18);
+      chair(-1.5, 18);
+      chair(1.5, 18, Math.PI);
+      chair(3.2, 18, Math.PI);
+
+      plant(-6.5, 15);
+      plant(6.5, 21);
+
+      /* MAIN DESK */
+
+      box(
+        0,
+        .8,
+        10,
+        7,
+        1.6,
+        1.5,
+        materials.wood
+      );
+
+      box(
+        0,
+        1.65,
+        10.1,
+        6.8,
+        .12,
+        1.35,
+        materials.white
+      );
+
+      monitor(-1.5, 2.18, 9.65);
+      monitor(1.5, 2.18, 9.65, true);
+
+      sign(
+        "MAIN DESK",
+        0,
+        1,
+        10.78,
+        Math.PI,
+        4.6
+      );
+
+      /* CAMERA ROOMS */
+
+      tellerRoom(
+        -17,
+        18,
+        "TELLER ROOM 1"
+      );
+
+      tellerRoom(
+        17,
+        18,
+        "TELLER ROOM 2"
+      );
+
+      tellerRoom(
+        -17,
+        4,
+        "TELLER ROOM 3"
+      );
+
+      tellerRoom(
+        17,
+        4,
+        "TELLER ROOM 4"
+      );
+
+      tellerRoom(
+        0,
+        -20,
+        "TELLER ROOM 5"
+      );
+
+      bathroom(
+        -17,
+        -9,
+        "MEN'S BATHROOM",
+        true
+      );
+
+      bathroom(
+        17,
+        -9,
+        "WOMEN'S BATHROOM",
+        false
+      );
+
+      createVault(17, -23);
+      createStockRoom(-17, -23);
+
+      createHallway(
+        -9,
+        "LEFT HALLWAY"
+      );
+
+      createHallway(
+        9,
+        "RIGHT HALLWAY"
+      );
+
+      createBankDoor(
+        -1,
+        -11,
+        -4
+      );
+
+      createBankDoor(
+        1,
+        11,
+        -4
+      );
+
+      /* LIGHTING */
+
+      scene.add(
+        new THREE.HemisphereLight(
+          0xeafff2,
+          0x17201b,
+          2.1
+        )
+      );
+
+      const keyLight =
+        new THREE.DirectionalLight(
+          0xfff6df,
+          2.4
+        );
+
+      keyLight.position.set(14, 20, 18);
+      keyLight.castShadow = true;
+      keyLight.shadow.mapSize.set(1024, 1024);
+      keyLight.shadow.camera.left = -35;
+      keyLight.shadow.camera.right = 35;
+      keyLight.shadow.camera.top = 35;
+      keyLight.shadow.camera.bottom = -35;
+
+      scene.add(keyLight);
+
+      const lobbyLight =
+        new THREE.PointLight(
+          0xd8ffe6,
+          70,
+          38
+        );
+
+      lobbyLight.position.set(0, 5.2, 14);
+      scene.add(lobbyLight);
+
+      const rearLight =
+        new THREE.PointLight(
+          0xd9e8ff,
+          60,
+          34
+        );
+
+      rearLight.position.set(0, 5.2, -19);
+      scene.add(rearLight);
+
+      /*
+       * OFFICE / CAMERA 1F HAS BEEN REMOVED.
+       */
+
+      const CAMERAS = [
+        {
+          id: "1A",
+          name: "Bank Safe",
+          position: [17, 4.7, -16],
+          target: [17, 1.8, -23]
+        },
+        {
+          id: "1B",
+          name: "Teller Room 1",
+          position: [-17, 4.7, 22.4],
+          target: [-17, 1.5, 17]
+        },
+        {
+          id: "1C",
+          name: "Main Entrance",
+          position: [-7, 4.9, 24],
+          target: [0, 1.8, 29.5]
+        },
+        {
+          id: "1D",
+          name: "Main Room",
+          position: [-7, 5, 23],
+          target: [0, 1.3, 17]
+        },
+        {
+          id: "2A",
+          name: "Teller Room 2",
+          position: [17, 4.7, 22.4],
+          target: [17, 1.5, 17]
+        },
+        {
+          id: "2B",
+          name: "Men's Bathroom",
+          position: [-17, 4.5, -4.8],
+          target: [-17, 1.3, -10]
+        },
+        {
+          id: "2C",
+          name: "Women's Bathroom",
+          position: [17, 4.5, -4.8],
+          target: [17, 1.3, -10]
+        },
+        {
+          id: "3A",
+          name: "Teller Room 3",
+          position: [-17, 4.7, 8.3],
+          target: [-17, 1.5, 3]
+        },
+        {
+          id: "3B",
+          name: "Stock Market Room",
+          position: [-17, 4.7, -16],
+          target: [-17, 1.5, -23]
+        },
+        {
+          id: "3D",
+          name: "Teller Room 4",
+          position: [17, 4.7, 8.3],
+          target: [17, 1.5, 3]
+        },
+        {
+          id: "2D",
+          name: "Main Desk",
+          position: [-6, 4.4, 15],
+          target: [0, 1.5, 10]
+        },
+        {
+          id: "1E",
+          name: "Left Hallway",
+          position: [-9, 4.8, 10],
+          target: [-9, 1.5, -9]
+        },
+        {
+          id: "2E",
+          name: "Right Hallway",
+          position: [9, 4.8, 10],
+          target: [9, 1.5, -9]
+        },
+        {
+          id: "3E",
+          name: "Left Door",
+          position: [-5, 4, -1],
+          target: [-11, 1.9, -4]
+        },
+        {
+          id: "4E",
+          name: "Right Door",
+          position: [5, 4, -1],
+          target: [11, 1.9, -4]
+        },
+        {
+          id: "2F",
+          name: "Teller Room 5",
+          position: [0, 4.7, -15],
+          target: [0, 1.5, -21]
+        }
+      ];
+
+      const cameraSelect =
+        document.querySelector("#cameraSelect");
+
+      const cameraId =
+        document.querySelector("#cameraId");
+
+      const cameraName =
+        document.querySelector("#cameraName");
+
+      const doorButtons = {
+        left:
+          document.querySelector("#leftDoorButton"),
+
+        right:
+          document.querySelector("#rightDoorButton")
+      };
+
+      let currentCamera = 0;
+
+      CAMERAS.forEach((cameraData, index) => {
+        const option =
+          document.createElement("option");
+
+        option.value = index;
+
+        option.textContent =
+          `CAM ${cameraData.id} · ${cameraData.name}`;
+
+        cameraSelect.append(option);
       });
-    }
 
-    document.querySelector("#previousButton").onclick = () =>
-      showCamera(currentCamera - 1);
+      function showCamera(reference) {
+        let index;
 
-    document.querySelector("#nextButton").onclick = () =>
-      showCamera(currentCamera + 1);
+        if (typeof reference === "number") {
+          index = reference;
+        } else {
+          index = CAMERAS.findIndex(
+            cameraData =>
+              cameraData.id ===
+              String(reference).toUpperCase()
+          );
 
-    document.querySelector("#saveButton").onclick = saveCameraImage;
+          if (index < 0) {
+            return false;
+          }
+        }
 
-    select.onchange = () => showCamera(Number(select.value));
+        currentCamera =
+          (
+            index +
+            CAMERAS.length
+          ) % CAMERAS.length;
 
-    window.addEventListener("keydown", event => {
-      if (event.key === "ArrowLeft") showCamera(currentCamera - 1);
-      if (event.key === "ArrowRight") showCamera(currentCamera + 1);
-      if (event.key.toLowerCase() === "s") saveCameraImage();
-    });
+        const selected =
+          CAMERAS[currentCamera];
 
-    showCamera(0);
+        camera.position.set(
+          ...selected.position
+        );
+
+        camera.lookAt(
+          ...selected.target
+        );
+
+        cameraSelect.value =
+          currentCamera;
+
+        cameraId.textContent =
+          `CAM ${selected.id}`;
+
+        cameraName.textContent =
+          selected.name.toUpperCase();
+
+        window.dispatchEvent(
+          new CustomEvent(
+            "bankcamera:change",
+            {
+              detail: {
+                id: selected.id,
+                name: selected.name,
+                index: currentCamera
+              }
+            }
+          )
+        );
+
+        return true;
+      }
+
+      function setDoor(side, closed) {
+        const name =
+          String(side).toLowerCase();
+
+        const door = doors[name];
+
+        if (!door) {
+          return false;
+        }
+
+        door.closed = Boolean(closed);
+
+        door.targetY =
+          door.closed ? 0 : 4.7;
+
+        door.status.material =
+          door.closed
+            ? materials.screenRed
+            : materials.screenGreen;
+
+        doorButtons[name].textContent =
+          `${name.toUpperCase()}: ${
+            door.closed ? "CLOSED" : "OPEN"
+          }`;
+
+        doorButtons[name].classList.toggle(
+          "closed",
+          door.closed
+        );
+
+        window.dispatchEvent(
+          new CustomEvent(
+            "bankdoor:change",
+            {
+              detail: {
+                side: name,
+                closed: door.closed
+              }
+            }
+          )
+        );
+
+        return true;
+      }
+
+      function toggleDoor(side) {
+        const name =
+          String(side).toLowerCase();
+
+        return (
+          doors[name] &&
+          setDoor(
+            name,
+            !doors[name].closed
+          )
+        );
+      }
+
+      function captureCanvas() {
+        renderer.render(scene, camera);
+
+        const selected =
+          CAMERAS[currentCamera];
+
+        const output =
+          document.createElement("canvas");
+
+        output.width = WIDTH;
+        output.height = HEIGHT;
+
+        const ctx =
+          output.getContext("2d");
+
+        ctx.filter =
+          "brightness(76%) contrast(116%) saturate(72%)";
+
+        ctx.drawImage(
+          renderer.domElement,
+          0,
+          0,
+          WIDTH,
+          HEIGHT
+        );
+
+        ctx.filter = "none";
+
+        ctx.fillStyle =
+          "rgba(0,0,0,.17)";
+
+        for (
+          let y = 0;
+          y < HEIGHT;
+          y += 4
+        ) {
+          ctx.fillRect(
+            0,
+            y,
+            WIDTH,
+            1
+          );
+        }
+
+        ctx.fillStyle =
+          "rgba(0,0,0,.58)";
+
+        ctx.fillRect(
+          0,
+          0,
+          WIDTH,
+          70
+        );
+
+        ctx.fillRect(
+          0,
+          HEIGHT - 52,
+          WIDTH,
+          52
+        );
+
+        ctx.font = "bold 30px monospace";
+        ctx.fillStyle = "#fff";
+
+        ctx.fillText(
+          `CAM ${selected.id}`,
+          28,
+          43
+        );
+
+        ctx.font = "bold 20px monospace";
+        ctx.fillStyle = "#b9ffd2";
+
+        ctx.fillText(
+          selected.name.toUpperCase(),
+          190,
+          42
+        );
+
+        ctx.font = "18px monospace";
+        ctx.fillStyle = "#fff";
+
+        ctx.fillText(
+          "NIGHT 1   12:00 AM",
+          28,
+          HEIGHT - 19
+        );
+
+        return output;
+      }
+
+      function saveCurrent() {
+        const selected =
+          CAMERAS[currentCamera];
+
+        captureCanvas().toBlob(
+          blob => {
+            const link =
+              document.createElement("a");
+
+            link.href =
+              URL.createObjectURL(blob);
+
+            link.download =
+              `${selected.id.toLowerCase()}.png`;
+
+            link.click();
+
+            setTimeout(
+              () =>
+                URL.revokeObjectURL(
+                  link.href
+                ),
+              1000
+            );
+          },
+          "image/png"
+        );
+      }
+
+      document
+        .querySelector("#previousButton")
+        .onclick =
+          () =>
+            showCamera(currentCamera - 1);
+
+      document
+        .querySelector("#nextButton")
+        .onclick =
+          () =>
+            showCamera(currentCamera + 1);
+
+      document
+        .querySelector("#saveButton")
+        .onclick = saveCurrent;
+
+      doorButtons.left.onclick =
+        () => toggleDoor("left");
+
+      doorButtons.right.onclick =
+        () => toggleDoor("right");
+
+      cameraSelect.onchange =
+        () =>
+          showCamera(
+            Number(cameraSelect.value)
+          );
+
+      window.addEventListener(
+        "keydown",
+        event => {
+          if (event.key === "ArrowLeft") {
+            showCamera(currentCamera - 1);
+          }
+
+          if (event.key === "ArrowRight") {
+            showCamera(currentCamera + 1);
+          }
+
+          if (
+            event.key.toLowerCase() === "a"
+          ) {
+            toggleDoor("left");
+          }
+
+          if (
+            event.key.toLowerCase() === "d"
+          ) {
+            toggleDoor("right");
+          }
+
+          if (
+            event.key.toLowerCase() === "s"
+          ) {
+            saveCurrent();
+          }
+        }
+      );
+
+      /*
+       * PUBLIC CAMERA API
+       *
+       * This lets your main game.js control
+       * the cameras and bank doors.
+       */
+
+      window.BankCameras = {
+        list: CAMERAS.map(
+          ({ id, name }) => ({
+            id,
+            name
+          })
+        ),
+
+        show: showCamera,
+
+        next() {
+          return showCamera(
+            currentCamera + 1
+          );
+        },
+
+        previous() {
+          return showCamera(
+            currentCamera - 1
+          );
+        },
+
+        getCurrent() {
+          return {
+            ...CAMERAS[currentCamera]
+          };
+        },
+
+        setDoor,
+        toggleDoor,
+
+        getDoorState(side) {
+          return Boolean(
+            doors[
+              String(side).toLowerCase()
+            ]?.closed
+          );
+        },
+
+        capture: captureCanvas,
+        save: saveCurrent
+      };
+
+      showCamera(0);
+      setDoor("left", false);
+      setDoor("right", false);
+
+      function animate() {
+        for (
+          const door of Object.values(doors)
+        ) {
+          door.shutter.position.y +=
+            (
+              door.targetY -
+              door.shutter.position.y
+            ) * .14;
+        }
+
+        renderer.render(scene, camera);
+        requestAnimationFrame(animate);
+      }
+
+      animate();
+    })();
   </script>
 </body>
 </html>
